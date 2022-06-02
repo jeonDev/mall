@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shop.mall.repository.UserDao">
+	
+	<!-- 회원가입 -->
+	<insert id="insertUserJoin" parameterType="java.util.HashMap">
+		INSERT INTO CMMN_USER
+					(
+					ID
+				  , PASSWORD
+				  , NAME
+				  , ROLE
+				  , TEL
+				  , EMAIL
+				  , PASSWORD_FAIL
+				  , JOIN_DTTM
+				  , SYS_DTTM
+				  , SYS_CHG_DTTM
+				  , SEX
+				  , DEL_YN
+				  <if test="address != null">
+				  , ADDRESS
+				  </if>
+				  <if test="address2 != null">
+				  , ADDRESS2
+				  </if>
+				  <if test="zip_cd != null">
+				  , ZIP_CD
+				  </if>
+					)
+			VALUES (
+					#{id}
+				  , #{password}
+				  , #{name}
+				  , #{role}
+				  , #{tel}
+				  , #{email}
+				  , 0
+				  , SYSDATE
+				  , SYSDATE
+				  , SYSDATE
+				  , #{sex}
+				  , 'N'
+				  <if test="address != null">
+				  , #{address}
+				  </if>
+				  <if test="address2 != null">
+				  , #{address2}
+				  </if>
+				  <if test="zip_cd != null">
+				  , #{zip_cd}
+				  </if>
+					)
+	</insert>
+	
+	<select id="selectUserName" parameterType="java.lang.String" resultType="com.shop.mall.model.CmmnUser">
+		SELECT ID
+			 , PASSWORD
+			 , NAME
+			 , ROLE
+			 , TEL
+			 , EMAIL
+		  FROM CMMN_USER
+		 WHERE ID = #{id}
+	</select>
+	
+	<select id="selectUserLogin" parameterType="java.util.HashMap" resultType="com.shop.mall.model.CmmnUser">
+		SELECT ID
+			 , PASSWORD
+			 , NAME
+			 , ROLE
+			 , TEL
+			 , EMAIL
+			 , PASSWORD_FAIL
+			 , JOIN_DTTM
+		  FROM CMMN_USER
+		 WHERE DEL_YN = 'N'
+		 <if test="id != null">
+		   AND ID = #{id}
+		 </if>
+		 <if test="refreshToken != null">
+		   AND REFRESH_TOKEN = #{refreshToken}
+		 </if>
+	</select>
+	
+	<!-- Refresh Token 저장 -->
+	<update id="setRefreshToken" parameterType="java.util.HashMap">
+	<![CDATA[
+		UPDATE CMMN_USER
+		   SET SYS_CHG_DTTM = SYSDATE
+		   	 , REFRESH_TOKEN = #{refreshToken}
+		 WHERE ID = #{id}
+	]]>
+	</update>
+	
+	<!-- Refresh Token으로 User 정보 추출 -->
+	<select id="getRefreshTokenToUserInfo" parameterType="java.lang.String" resultType="com.shop.mall.model.CmmnUser">
+	<![CDATA[
+		SELECT ID
+			 , ROLE
+		  FROM CMMN_USER
+		 WHERE DEL_YN = 'N'
+		   AND REFRESH_TOKEN = #{refreshToken}
+	]]>
+	</select>
+	
+	<!-- 사용자 정보 조회 -->
+	<select id="selectUserInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	<![CDATA[
+		SELECT ID
+			 , NAME
+			 , ROLE
+			 , replace(ROLE, 'ROLE_', '') ROLE_NAME
+			 , TEL
+			 , EMAIL
+			 , PASSWORD_FAIL
+			 , ADDRESS
+			 , ADDRESS2
+			 , ADDRESS || ADDRESS2 AS ADDR
+			 , ZIP_CD
+			 , SEX 
+			 , FN_CMMN_CODE_NM(SEX, 'SEX') AS SEX_NM
+		  FROM CMMN_USER CU
+		 WHERE DEL_YN = 'N'
+	]]>
+			<if test="id != null">
+		   AND CU.ID = #{id}
+			</if>
+	</select>
+	
+	<!-- 사용자 정보 수정 -->
+	<update id="updateCmmnUser" parameterType="java.util.HashMap">
+		UPDATE CMMN_USER
+		   SET SYS_CHG_DTTM = SYSDATE
+			<if test="password != null">
+		   	 , PASSWORD = #{password}
+			</if>
+			<if test="name != null">
+			 , NAME = #{name}
+			</if>
+			<if test="tel != null">
+			 , TEL = #{tel}
+			</if>
+			<if test="email != null">
+			 , EMAIL = #{email}
+			</if>
+			<if test="zip_cd != null">
+			 , ZIP_CD = #{zip_cd}
+			</if>
+			<if test="address != null">
+			 , ADDRESS = #{address}
+			</if>
+			<if test="address2 != null">
+			 , ADDRESS2 = #{address2}
+			</if>
+			<if test="sex != null">
+			 , SEX = #{sex}
+			</if>
+			<if test="del_yn != null">
+			 , DEL_YN = #{del_yn}
+			</if>
+		 WHERE ID = #{id}
+	</update>
+</mapper>

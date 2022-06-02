@@ -1,0 +1,658 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shop.mall.repository.PaymentDao">
+	
+	<select id="getProductPayInfoBasketList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT A.PRODUCT_NO
+			 , A.PRODUCT_ID
+			 , A.PRODUCT_NAME
+			 , A.PRODUCT_CNT
+			 , A.PRODUCT_SIZE
+			 , A.PRICE
+			 , A.TOT_PRICE
+			 , A.PRICE_DISCOUNT
+			 , A.DISCOUNT_YN
+			 , A.TOT_PRICE * (NVL(A.PRICE_DISCOUNT, 0) / 100) AS TOT_DISCOUNT_PRICE
+			 , FN_TOT_PRICE(A.PRODUCT_NO) * A.PRODUCT_CNT AS FINAL_PRICE
+			 , A.PRODUCT_STOCK
+			 , A.STOCK_CHK
+			 , A.STOCK_CHK_NM
+			 , PF.FILE_SRC || PF.FILE_REAL_NM AS IMG_SRC
+			 , CASE WHEN STOCK_CHK <> 0 THEN 1
+			 	ELSE 0 END AS CHK_YN
+		  FROM (
+				SELECT PL.PRODUCT_NO
+					 , PM.PRODUCT_ID
+					 , PM.PRODUCT_NAME
+					 , PB.PRODUCT_CNT
+					 , PL.PRODUCT_SIZE
+					 , PM.PRICE
+					 , PM.PRICE * PB.PRODUCT_CNT AS TOT_PRICE
+					 , PL.PRICE_DISCOUNT
+					 , NVL2(PL.PRICE_DISCOUNT, 'Y', 'N') AS DISCOUNT_YN
+					 , PL.PRODUCT_CNT AS PRODUCT_STOCK
+					 , CASE WHEN PL.PRODUCT_CNT < 1 OR DECODE(PM.DEL_YN, 'Y', PM.DEL_YN, PL.DEL_YN) = 'Y' THEN 0
+					 		WHEN PL.PRODUCT_CNT < 5 AND PL.PRODUCT_CNT > 0 THEN 1
+					 		ELSE 2
+					 	  END AS STOCK_CHK
+					 , CASE WHEN DECODE(PM.DEL_YN, 'Y', PM.DEL_YN, PL.DEL_YN) = 'Y' THEN '판매 중지'
+					 		WHEN PL.PRODUCT_CNT < 1 THEN '재고 없음'
+					 		WHEN PL.PRODUCT_CNT < 5 AND PL.PRODUCT_CNT > 0 THEN '재고 ' || PL.PRODUCT_CNT || '개 남음'
+					 		ELSE '재고 5개 이상 남음'
+					 	  END AS STOCK_CHK_NM
+				  FROM PRODUCT_MST PM
+				  	 , PRODUCT_LIST PL
+				  	 , (
+				  	 	SELECT PRODUCT_NO
+				  	 		 , PRODUCT_CNT
+				  	 	  FROM PRODUCT_BASKET
+				  	 	 WHERE 1=1
+				  	 	   AND BASKET_NO IN
+		]]>
+							<foreach item="item" index="index" collection="list"
+						      open="(" separator="," close=")">
+								  #{item.basket_no}
+							</foreach>
+		<![CDATA[
+				  	 	) PB
+				 WHERE PM.PRODUCT_ID = PL.PRODUCT_ID
+				   AND PL.PRODUCT_NO = PB.PRODUCT_NO
+				   AND PL.PRODUCT_CNT >= PB.PRODUCT_CNT
+			   ) A
+			 , (
+			 	SELECT FILE_ID
+			  		 , PRODUCT_ID
+			  		 , FILE_SRC
+			  		 , FILE_NM
+			  		 , FILE_REAL_NM
+			  		 , SRT_ODR
+			  	  FROM PRODUCT_FILE
+			  	 WHERE DEL_YN = 'N'
+			  	   AND SRT_ODR = 1
+			  	 ORDER BY SRT_ODR
+			 	) PF
+		 WHERE A.PRODUCT_ID = PF.PRODUCT_ID
+		]]>
+	</select>
+	
+	<select id="getProductPayInfoProductList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT A.PRODUCT_NO
+			 , A.PRODUCT_ID
+			 , A.PRODUCT_NAME
+			 , A.PRODUCT_CNT
+			 , A.PRODUCT_SIZE
+			 , A.PRICE
+			 , A.TOT_PRICE
+			 , A.PRICE_DISCOUNT
+			 , A.DISCOUNT_YN
+			 , A.TOT_PRICE * (NVL(A.PRICE_DISCOUNT, 0) / 100) AS TOT_DISCOUNT_PRICE
+			 , FN_TOT_PRICE(A.PRODUCT_NO) * A.PRODUCT_CNT AS FINAL_PRICE
+			 , A.PRODUCT_STOCK
+			 , A.STOCK_CHK
+			 , A.STOCK_CHK_NM
+			 , PF.FILE_SRC || PF.FILE_REAL_NM AS IMG_SRC
+			 , CASE WHEN STOCK_CHK <> 0 THEN 1
+			 	ELSE 0 END AS CHK_YN
+		  FROM (
+				SELECT PL.PRODUCT_NO
+					 , PM.PRODUCT_ID
+					 , PM.PRODUCT_NAME
+					 , PB.PRODUCT_CNT
+					 , PL.PRODUCT_SIZE
+					 , PM.PRICE
+					 , PM.PRICE * PB.PRODUCT_CNT AS TOT_PRICE
+					 , PL.PRICE_DISCOUNT
+					 , NVL2(PL.PRICE_DISCOUNT, 'Y', 'N') AS DISCOUNT_YN
+					 , PL.PRODUCT_CNT AS PRODUCT_STOCK
+					 , CASE WHEN PL.PRODUCT_CNT < 1 OR DECODE(PM.DEL_YN, 'Y', PM.DEL_YN, PL.DEL_YN) = 'Y' THEN 0
+					 		WHEN PL.PRODUCT_CNT < 5 AND PL.PRODUCT_CNT > 0 THEN 1
+					 		ELSE 2
+					 	  END AS STOCK_CHK
+					 , CASE WHEN DECODE(PM.DEL_YN, 'Y', PM.DEL_YN, PL.DEL_YN) = 'Y' THEN '판매 중지'
+					 		WHEN PL.PRODUCT_CNT < 1 THEN '재고 없음'
+					 		WHEN PL.PRODUCT_CNT < 5 AND PL.PRODUCT_CNT > 0 THEN '재고 ' || PL.PRODUCT_CNT || '개 남음'
+					 		ELSE '재고 5개 이상 남음'
+					 	  END AS STOCK_CHK_NM
+				  FROM PRODUCT_MST PM
+				  	 , PRODUCT_LIST PL
+				]]>
+				  	 , (
+				  	 	<foreach item="item" index="index" collection="list"
+				  	 		open="(" separator="UNION ALL" close=")">
+						SELECT #{item.product_no} AS PRODUCT_NO
+							 , #{item.product_cnt} AS PRODUCT_CNT
+						  FROM DUAL
+						</foreach>
+		<![CDATA[
+				  	 	) PB
+				 WHERE PM.PRODUCT_ID = PL.PRODUCT_ID
+				   AND PL.PRODUCT_NO = PB.PRODUCT_NO
+				   AND PL.PRODUCT_CNT >= PB.PRODUCT_CNT
+			   ) A
+			 , (
+			 	SELECT FILE_ID
+			  		 , PRODUCT_ID
+			  		 , FILE_SRC
+			  		 , FILE_NM
+			  		 , FILE_REAL_NM
+			  		 , SRT_ODR
+			  	  FROM PRODUCT_FILE
+			  	 WHERE DEL_YN = 'N'
+			  	   AND SRT_ODR = 1
+			  	 ORDER BY SRT_ODR
+			 	) PF
+		 WHERE A.PRODUCT_ID = PF.PRODUCT_ID
+		]]>
+	</select>
+	
+	<!-- 주문내역 추가 -->
+	<insert id="insertProductOrder" parameterType="java.util.HashMap">
+		<selectKey keyProperty="order_no" resultType="string" order="BEFORE">
+			SELECT FN_SEQ('ON') FROM DUAL
+		</selectKey>
+		INSERT INTO PRODUCT_ORDER
+					(
+					ORDER_NO
+				  , USR_ID
+				  , ORDER_DTTM
+				  , PAY_METHOD
+				  , MERCHANT_UID
+				  , NAME
+				  , AMOUNT
+				  , BUYER_NAME
+				  , BUYER_TEL
+				  , BUYER_ADDR
+				  , BUYER_POSTCODE
+				  <if test="EMAIL != null">
+				  , BUYER_EMAIL
+				  </if>
+				  <if test="MEMO != null">
+				  , MEMO
+				  </if>
+					)
+			VALUES (
+					#{order_no}
+				  , #{id}
+				  , SYSDATE
+				  , #{pay_method}
+				  , #{merchant_uid}
+				  , #{product_name}
+				  , #{amount}
+				  , #{NAME}
+				  , #{TEL}
+				  , #{ADDRESS}
+				  , #{ZIP_CD}
+				  <if test="EMAIL != null">
+				  , #{EMAIL}
+				  </if>
+				  <if test="MEMO != null">
+				  , #{MEMO}
+				  </if>
+					)
+	</insert>
+
+	<!-- 상품 구매내역 입력 -->
+	<insert id="insertProductPayment" parameterType="java.util.HashMap" useGeneratedKeys="true" keyProperty="buy_price">
+		<selectKey keyProperty="item" resultType="java.util.HashMap" order="BEFORE">
+			SELECT FN_SEQ('PP') AS PAYMENT_NO
+				 , PM.PRICE AS PRICE
+				 , FN_TOT_PRICE(#{product_no}) * #{product_cnt} AS BUY_PRICE
+				 , NVL(PL.PRICE_DISCOUNT, 0) AS PRICE_DISCOUNT
+			  FROM PRODUCT_MST PM
+			  	 , PRODUCT_LIST PL
+			 WHERE PM.PRODUCT_ID = PL.PRODUCT_ID
+			   AND PL.PRODUCT_NO = #{product_no}
+		</selectKey>
+		INSERT INTO PRODUCT_PAYMENT
+					(
+					PAYMENT_NO		-- 구매내역번호
+				  , ORDER_NO		-- 주문번호
+				  , PRODUCT_NO		-- 상품 상세번호
+				  , PRODUCT_CNT		-- 구매갯수
+				  , PRICE			-- 구매 금액
+				  , BUY_PRICE		-- 구매 금액
+				  , PRICE_DISCOUNT	-- 할인율
+				  , PAYMENT_DTTM	-- 결제 일자
+				  , PAYMENT_WAY		-- 결제 수단
+				  , PAYMENT_YN		-- 결제 여부
+				  , PAYMENT_STATE	-- 결제 상태
+				  , SYS_ENR_DTTM
+				  , SYS_CHG_DTTM
+				  <if test="id != null">
+				  , SYS_ENR_ID
+				  , SYS_CHG_ID
+				  </if>
+					)
+				VALUES 
+					(
+					#{item.PAYMENT_NO}
+				  , #{order_no}
+				  , #{product_no}
+				  , #{product_cnt}
+				  , #{item.PRICE}
+				  , #{item.BUY_PRICE}
+				  , #{item.PRICE_DISCOUNT}
+				  , SYSDATE
+				  , #{payment_way}
+				  , #{payment_yn}
+				  , #{payment_state}
+				  , SYSDATE
+				  , SYSDATE
+				  <if test="id != null">
+				  , #{id}
+				  , #{id}
+				  </if>
+					)
+	</insert>
+	
+	<!-- 상품 구매내역 상태 입력 -->
+	<insert id="insertPaymentState" parameterType="java.util.HashMap">
+		INSERT INTO PAYMENT_STATE
+					(
+					PAYMENT_NO
+				  , PAYMENT_STATE
+				  , SYS_ENR_DTTM
+				  <if test="id != null">
+				  , SYS_ENR_ID
+				  </if>
+					)
+			VALUES (
+					#{payment_no}
+				  , #{payment_state}
+				  , SYSDATE
+				  <if test="id != null">
+				  , #{id}
+				  </if>
+					)
+	</insert>
+	
+	<!-- 주문내역 조회 -->
+	<select id="selectProductOrderList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT PM.PRODUCT_NAME 
+			 , PM.PRICE AS ORIGIN_PRICE
+			 , PL.PRODUCT_SIZE 
+			 , A.PAYMENT_NO
+			 , A.PRODUCT_NO
+			 , A.BUY_PRICE
+			 , A.PAYMENT_DTTM
+			 , A.PAYMENT_WAY
+			 , A.PAYMENT_YN
+			 , A.PAYMENT_STATE
+			 , A.PAYMENT_STATE_NM
+			 , A.ORDER_NO
+			 , A.ORDER_PRICE
+			 , A.USR_ID
+			 , CU.NAME 
+		  FROM PRODUCT_MST PM
+			 , PRODUCT_LIST PL
+			 , CMMN_USER CU
+			 , (
+				SELECT PP.PAYMENT_NO 
+					 , PP.PRODUCT_NO 
+					 , PP.BUY_PRICE 
+					 , TO_CHAR(PP.PAYMENT_DTTM, 'YYYYMMDDhh24miss') AS PAYMENT_DTTM
+					 , PP.PAYMENT_WAY 
+					 , PP.PAYMENT_YN 
+					 , PO.ORDER_NO 
+					 , PO.ORDER_PRICE 
+					 , PO.USR_ID 
+					 , PP.PAYMENT_STATE 
+					 , CC.CMN_NM AS PAYMENT_STATE_NM
+				  FROM PRODUCT_ORDER PO
+				  	 , PRODUCT_PAYMENT PP
+				  	 , (
+				  	 	SELECT CMN_CD
+				  	 		 , CMN_NM
+				  	 	  FROM CMMN_CODE CC
+				  	 	 WHERE CC.CMN_TYPE = 'PAYMENT_STATE'
+				  	 	   AND CC.DEL_YN   = 'N'
+				  	 	) CC
+				 WHERE PO.ORDER_NO 	 = PP.ORDER_NO 
+				   AND PP.PAYMENT_STATE = CC.CMN_CD 
+				<choose>
+					<when test="id != null">
+				   AND PO.USR_ID = #{id}
+					</when>
+					<otherwise>
+				   AND PO.ORDER_NO = #{order_no}
+					</otherwise>
+				</choose>
+				) A
+		 WHERE PM.PRODUCT_ID = PL.PRODUCT_ID 
+		   AND PL.PRODUCT_NO = A.PRODUCT_NO
+		   AND A.USR_ID 	 = CU.ID
+	</select>
+	
+	<!-- 구매내역 상태 history 조회 -->
+	<select id="selectPaymentStateList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT PAYMENT_NO
+			 , PAYMENT_STATE
+			 , SYS_ENR_ID
+			 , SYS_ENR_DTTM
+			 , TO_CHAR(SYS_ENR_DTTM, 'YYYYMMDDhh24miss') AS PAYMENT_DTTM
+		  FROM PAYMENT_STATE
+		 WHERE PAYMENT_NO = #{payment_no}
+		 ORDER BY SYS_ENR_DTTM
+	</select>
+	
+	<!-- 구매내역 수정 -->
+	<update id="updateProductPayment" parameterType="java.util.HashMap">
+		UPDATE PRODUCT_PAYMENT
+		   SET SYS_CHG_DTTM = SYSDATE
+		   	 <if test="payment_yn != null">
+		   	 , PAYMENT_DTTM = SYSDATE
+		   	 </if>
+		   	 <if test="id != null">
+		   	 , SYS_CHG_ID = #{id}
+		   	 </if>
+		  	 <if test="price != null">
+		  	 , PRICE = #{price}
+		  	 </if>
+		  	 <if test="buy_price != null">
+		  	 , BUY_PRICE = #{buy_price}
+		  	 </if>
+		  	 <if test="price_discount != null">
+		  	 , PRICE_DISCOUNT = #{price_discount}
+		  	 </if>
+		  	 <if test="payment_way != null">
+		  	 , PAYMENT_WAY = #{payment_way}
+		  	 </if>
+		  	 <if test="payment_yn != null">
+		  	 , PAYMENT_YN = #{payment_yn}
+		  	 </if>
+		  	 <if test="payment_state != null">
+		  	 , PAYMENT_STATE = #{payment_state}
+		  	 </if>
+		 WHERE 
+		 	 <if test="payment_no != null">
+		 	   PAYMENT_NO = #{payment_no}	 
+		 	 </if>
+		 	 <if test="order_no != null">
+		   	   ORDER_NO = #{order_no}	 
+		 	 </if>
+	</update>
+	
+	<!-- 상품 구매내역 삭제 -->
+	<delete id="deleteProductPayment" parameterType="java.util.HashMap">
+		DELETE FROM PRODUCT_PAYMENT
+			  WHERE 
+			  	 <if test="payment_no != null">
+			 	    PAYMENT_NO = #{payment_no}	 
+			 	 </if>
+			 	 <if test="order_no != null">
+			   	    ORDER_NO = #{order_no} 
+			 	 </if>
+	</delete>
+	
+	<!-- 상품 구매내역 삭제 -->
+	<delete id="deleteProductOrder" parameterType="java.util.HashMap">
+		DELETE FROM PRODUCT_ORDER
+			  WHERE ORDER_NO = #{order_no}	 
+	</delete>
+	
+	<!-- 상품 구매내역 삭제 -->
+	<delete id="deleteProductPaymentList" parameterType="java.util.HashMap">
+		DELETE FROM PRODUCT_PAYMENT
+			  WHERE 
+			 	 	ORDER_NO IN
+			  	<foreach item="item" index="index" collection="list"
+			      open="(" separator="," close=")">
+					  #{item}
+				</foreach>
+	</delete>
+	
+	<!-- 상품 구매내역 삭제 -->
+	<delete id="deleteProductOrderList" parameterType="java.util.HashMap">
+		DELETE FROM PRODUCT_ORDER
+			  WHERE 
+			  		ORDER_NO IN
+			  	<foreach item="item" index="index" collection="list"
+			      open="(" separator="," close=")">
+					  #{item}
+				</foreach>
+			  	
+	</delete>
+							
+	<!-- 상품 결제 정보(가격) 조회 -->
+	<select id="selectPaymentPriceInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	<![CDATA[
+		SELECT SUM(A.TOT_PRICE) AS AMOUNT
+			 , CASE WHEN COUNT(A.PRODUCT_NAME) = 1 THEN MAX(A.PRODUCT_NAME)
+			 		ELSE MAX(A.PRODUCT_NAME) || ' 외 ' || COUNT(A.PRODUCT_NAME) || '건'
+			 		 END AS PRODUCT_NAME
+		  FROM (
+				SELECT PL.PRODUCT_NO
+					 , PM.PRODUCT_NAME 
+					 , FN_TOT_PRICE(PL.PRODUCT_NO) * PAY.PRODUCT_CNT AS TOT_PRICE
+				  FROM PRODUCT_MST PM
+				  	 , PRODUCT_LIST PL
+				  	 , (
+	]]>
+				  	 	<foreach item="item" index="index" collection="list"
+				  	 		open="(" separator="UNION ALL" close=")">
+						SELECT #{item.product_no} AS PRODUCT_NO
+							 , #{item.product_cnt} AS PRODUCT_CNT
+						  FROM DUAL
+						</foreach>
+	<![CDATA[
+				  	 	) PAY
+				 WHERE PM.PRODUCT_ID  = PL.PRODUCT_ID 
+				   AND PL.PRODUCT_NO = PAY.PRODUCT_NO
+				   AND PM.DEL_YN = 'N'
+				   AND PL.DEL_YN = 'N'
+				   AND PM.PRODUCT_STATE = '001'		/* 판매중 */
+				) A
+	]]>
+	</select>
+	
+	<!-- 주문내역 조회 -->
+	<select id="selectOrderInfoList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT A.ORDER_NO
+			 , A.USR_ID
+			 , A.ORDER_DTTM
+			 , A.PAY_METHOD
+			 , A.MERCHANT_UID
+			 , A.NAME
+			 , A.AMOUNT
+			 , A.BUYER_EMAIL
+			 , A.BUYER_NAME
+			 , A.BUYER_TEL
+			 , A.BUYER_ADDR
+			 , A.BUYER_POSTCODE
+			 , A.MEMO
+			 , A.PAYMENT_NO
+			 , A.PRODUCT_NO
+			 , A.PRODUCT_CNT
+			 , A.PRICE
+			 , A.BUY_PRICE
+			 , A.PRICE_DISCOUNT
+			 , A.PAYMENT_DTTM
+			 , A.PAYMENT_YN
+			 , A.PAYMENT_STATE
+			 , A.PAYMENT_STATE_NM
+			 , A.PRODUCT_ID
+			 , A.PRODUCT_NAME
+			 , A.PRODUCT_SIZE
+			 , A.FILE_SRC
+			 , A.FILE_ID
+			 , A.FILE_NM
+			 , A.FILE_REAL_NM
+			 , A.IMG_SRC
+		  FROM (
+				SELECT PO.ORDER_NO
+					 , PO.USR_ID
+					 , TO_CHAR(PO.ORDER_DTTM, 'YYYYMMDD') AS ORDER_DTTM
+					 , PO.PAY_METHOD
+					 , PO.MERCHANT_UID
+					 , PO.NAME
+					 , PO.AMOUNT
+					 , PO.BUYER_EMAIL
+					 , PO.BUYER_NAME
+					 , PO.BUYER_TEL
+					 , PO.BUYER_ADDR
+					 , PO.BUYER_POSTCODE
+					 , PO.MEMO
+					 , PP.PAYMENT_NO
+					 , PP.PRODUCT_NO
+					 , PP.PRODUCT_CNT
+					 , PP.PRICE
+					 , PP.BUY_PRICE
+					 , PP.PRICE_DISCOUNT
+					 , TO_CHAR(PP.PAYMENT_DTTM, 'YYYYMMDD') AS PAYMENT_DTTM
+					 , PP.PAYMENT_YN
+					 , PP.PAYMENT_STATE
+					 , FN_CMMN_CODE_NM(PP.PAYMENT_STATE, 'PAYMENT_STATE') AS PAYMENT_STATE_NM
+					 , PM.PRODUCT_ID
+					 , PM.PRODUCT_NAME
+					 , PL.PRODUCT_SIZE
+					 , PF.FILE_SRC
+					 , PF.FILE_ID
+					 , PF.FILE_NM
+					 , PF.FILE_REAL_NM
+					 , PF.FILE_SRC || PF.FILE_REAL_NM AS IMG_SRC
+					 , ROW_NUMBER() OVER(ORDER BY PO.ORDER_DTTM DESC) AS RN 
+				  FROM PRODUCT_ORDER PO
+				  	 , PRODUCT_PAYMENT PP
+				  	 , PRODUCT_LIST PL
+				  	 , PRODUCT_MST PM
+				  	 , (
+					 	SELECT FILE_ID
+					  		 , PRODUCT_ID
+					  		 , FILE_SRC
+					  		 , FILE_NM
+					  		 , FILE_REAL_NM
+					  		 , SRT_ODR
+					  	  FROM PRODUCT_FILE
+					  	 WHERE DEL_YN = 'N'
+					  	   AND SRT_ODR = 1
+					  	 ORDER BY SRT_ODR
+					 	) PF
+				 WHERE PO.ORDER_NO	 = PP.ORDER_NO
+				   AND PP.PRODUCT_NO = PL.PRODUCT_NO
+				   AND PL.PRODUCT_ID = PM.PRODUCT_ID
+				   AND PM.PRODUCT_ID = PF.PRODUCT_ID
+				]]>
+				   	<if test="!role">
+				   AND USR_ID		 = #{id}
+				   	</if>
+					<if test="order_no != null">
+				   AND PO.ORDER_NO = #{order_no}
+					</if>
+					<if test="payment_state != null">
+				   AND PP.PAYMENT_STATE = #{payment_state}
+					</if>
+				) A
+		 WHERE A.RN BETWEEN #{start} AND #{end}
+		 ORDER BY A.ORDER_DTTM DESC
+	</select>
+	
+	<!-- 주문내역 조회 -->
+	<select id="selectOrderInfoListCnt" parameterType="java.util.HashMap" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*)
+		  FROM PRODUCT_ORDER PO
+		  	 , PRODUCT_PAYMENT PP
+		  	 , PRODUCT_LIST PL
+		  	 , PRODUCT_MST PM
+		  	 , (
+			 	SELECT FILE_ID
+			  		 , PRODUCT_ID
+			  		 , FILE_SRC
+			  		 , FILE_NM
+			  		 , FILE_REAL_NM
+			  		 , SRT_ODR
+			  	  FROM PRODUCT_FILE
+			  	 WHERE DEL_YN = 'N'
+			  	   AND SRT_ODR = 1
+			  	 ORDER BY SRT_ODR
+			 	) PF
+		 WHERE PO.ORDER_NO	 = PP.ORDER_NO
+		   AND PP.PRODUCT_NO = PL.PRODUCT_NO
+		   AND PL.PRODUCT_ID = PM.PRODUCT_ID
+		   AND PM.PRODUCT_ID = PF.PRODUCT_ID
+		]]>
+		   	<if test="!role">
+		   AND USR_ID		 = #{id}
+		   	</if>
+			<if test="order_no != null">
+		   AND PO.ORDER_NO = #{order_no}
+			</if>
+			<if test="payment_state != null">
+		   AND PP.PAYMENT_STATE = #{payment_state}
+			</if>
+		 ORDER BY PO.ORDER_DTTM DESC
+	</select>
+	
+	<!-- 주문상태별 수량 조회 -->
+	<select id="selectOrderPaymentStateCnt" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT PS.CMN_CD AS PAYMENT_STATE
+			 , COUNT(PP.PAYMENT_STATE) AS PAYMENT_STATE_CNT
+			 , MAX(PS.CMN_NM) AS PAYMENT_STATE_NM
+		  FROM (
+		  		SELECT PP.PAYMENT_STATE
+		  		  FROM PRODUCT_ORDER PO
+					 , PRODUCT_PAYMENT PP
+				 WHERE 1=1
+				   AND PO.ORDER_NO = PP.ORDER_NO
+				   AND PO.USR_ID = #{id}
+		  		) PP
+		  	 , (
+				SELECT CMN_CD
+					 , CMN_NM
+					 , SRT_ODR
+				  FROM CMMN_CODE CC
+				 WHERE 1=1
+				   AND CC.DEL_YN = 'N'
+				   AND CC.CMN_TYPE = 'PAYMENT_STATE'
+				) PS
+		 WHERE 1=1
+		   AND PS.CMN_CD = PP.PAYMENT_STATE (+)
+		 GROUP BY PS.CMN_CD
+		 ORDER BY MAX(PS.SRT_ODR)
+		]]>
+	</select>
+	
+	<!-- 결제 대기 상태 조회(하루지난 건) -->
+	<select id="selectUnPaymentOrder" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT PO.ORDER_NO
+			 , PO.USR_ID
+			 , PO.ORDER_DTTM
+			 , PO.PAY_METHOD
+			 , PO.MERCHANT_UID
+			 , PO.NAME
+			 , PO.AMOUNT
+			 , PO.BUYER_EMAIL
+			 , PO.BUYER_NAME
+			 , PO.BUYER_TEL
+			 , PO.BUYER_ADDR
+			 , PO.BUYER_POSTCODE
+			 , PO.MEMO
+			 , PP.PAYMENT_NO
+			 , PP.PRODUCT_NO
+			 , PP.PRODUCT_CNT
+			 , PP.PRICE
+			 , PP.BUY_PRICE
+			 , PP.PRICE_DISCOUNT
+			 , PP.PAYMENT_DTTM
+			 , PP.PAYMENT_WAY
+			 , PP.PAYMENT_YN
+			 , PP.PAYMENT_STATE
+			 , PP.SYS_ENR_ID
+			 , PP.SYS_ENR_DTTM
+			 , PP.SYS_CHG_ID
+			 , PP.SYS_CHG_DTTM
+			 , PP.* 
+		  FROM PRODUCT_ORDER PO
+		  	 , PRODUCT_PAYMENT PP
+		 WHERE PO.ORDER_NO 		= PP.ORDER_NO
+		   AND PP.PAYMENT_STATE = 'PS'		/* 결제대기 */
+		   AND PP.PAYMENT_YN 	= 'N'		/* 미결제 */
+		   AND SYSDATE - PO.ORDER_DTTM > 1	/* 주문일기준 하루 지남 */
+		]]>
+	</select>
+</mapper>

@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shop.mall.repository.BoardDao">
+
+	<!-- 게시글 리스트 조회 -->
+	<select id="selectBbsMstList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT A.BBS_NO
+			 , A.BBS_TYPE
+			 , A.BBS_TYPE_NM
+			 , A.USR_ID
+			 , A.USR_NM
+			 , A.TITLE
+			 , A.CONTENT
+			 , A."COMMENT"
+			 , A.VIEW_CNT
+			 , A.WRT_STATE
+			 , A.WRT_STATE_NM
+			 , A.PRODUCT_ID
+			 , A.SYS_ENR_DTTM
+			 , A.RN
+		  FROM (
+				SELECT BM.BBS_NO
+					 , BM.BBS_TYPE
+					 , BBS_TYPE.CMN_NM AS BBS_TYPE_NM
+					 , BM.USR_ID
+					 , CU.NAME AS USR_NM
+					 , BM.TITLE
+					 , TO_CHAR(SUBSTR(BM.CONTENT, 1, 3000)) AS CONTENT
+					 , BM."COMMENT"
+					 , BM.VIEW_CNT
+					 , BM.WRT_STATE
+					 , WRT_STATE.CMN_NM AS WRT_STATE_NM
+					 , BM.DEL_YN
+					 , BM.PRODUCT_ID
+					 , TO_CHAR(BM.SYS_ENR_DTTM, 'YYYY. MM. DD') AS SYS_ENR_DTTM
+					 , ROW_NUMBER() OVER(ORDER BY SYS_ENR_DTTM DESC) AS RN
+				  FROM BBS_MST BM
+				  	 , CMMN_USER CU
+				  	 , (
+				  	 	SELECT CC.CMN_CD 
+				 	 		 , CC.CMN_NM 
+				 	 	  FROM CMMN_CODE CC
+				 	 	 WHERE CC.DEL_YN	= 'N'
+				 	 	   AND CC.CMN_TYPE	= 'BBS_TYPE'
+						) BBS_TYPE
+				  	 , (
+				  	 	SELECT CC.CMN_CD 
+				 	 		 , CC.CMN_NM 
+				 	 	  FROM CMMN_CODE CC
+				 	 	 WHERE CC.DEL_YN	= 'N'
+				 	 	   AND CC.CMN_TYPE	= 'WRT_STATE'
+						) WRT_STATE
+				 WHERE 1=1
+				   AND BM.USR_ID = CU.ID
+				   AND BM.WRT_STATE = WRT_STATE.CMN_CD
+				   AND BM.BBS_TYPE = BBS_TYPE.CMN_CD
+				   AND BM.DEL_YN = 'N'
+				]]>
+				  <if test="bbs_type != null">
+				   AND BBS_TYPE = #{bbs_type}
+				  </if>
+				  <if test="wrt_state != null">
+				   AND WRT_STATE = #{wrt_state}
+				  </if>
+				  <if test="product_id != null">
+				   AND PRODUCT_ID = #{product_id}
+				  </if>
+				  <if test="title != null">
+				   AND TITLE LIKE '%' || #{title} || '%'
+				  </if>
+				  <if test="content != null">
+				   AND CONTENT LIKE '%' || #{content} || '%'
+				  </if>
+				  <if test="comment != null">
+				   AND COMMENT LIKE '%' ||  #{comment} || '%'
+				  </if>
+				) A 
+		 WHERE A.RN BETWEEN #{start} AND #{end}
+	</select>
+	
+	<!-- 게시글 리스트 조회 -->
+	<select id="selectBbsMstListCount" parameterType="java.util.HashMap" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*)
+		  FROM BBS_MST BM
+		  	 , CMMN_USER CU
+		  	 , (
+		  	 	SELECT CC.CMN_CD 
+		 	 		 , CC.CMN_NM 
+		 	 	  FROM CMMN_CODE CC
+		 	 	 WHERE CC.DEL_YN	= 'N'
+		 	 	   AND CC.CMN_TYPE	= 'BBS_TYPE'
+				) BBS_TYPE
+		  	 , (
+		  	 	SELECT CC.CMN_CD 
+		 	 		 , CC.CMN_NM 
+		 	 	  FROM CMMN_CODE CC
+		 	 	 WHERE CC.DEL_YN	= 'N'
+		 	 	   AND CC.CMN_TYPE	= 'WRT_STATE'
+				) WRT_STATE
+		 WHERE 1=1
+		   AND BM.USR_ID = CU.ID
+		   AND BM.WRT_STATE = WRT_STATE.CMN_CD
+		   AND BM.BBS_TYPE = BBS_TYPE.CMN_CD
+		   AND BM.DEL_YN = 'N'
+		]]>
+		  <if test="bbs_type != null">
+		   AND BBS_TYPE = #{bbs_type}
+		  </if>
+		  <if test="wrt_state != null">
+		   AND WRT_STATE = #{wrt_state}
+		  </if>
+		  <if test="product_id != null">
+		   AND PRODUCT_ID = #{product_id}
+		  </if>
+		  <if test="title != null">
+		   AND TITLE LIKE '%' || #{title} || '%'
+		  </if>
+		  <if test="content != null">
+		   AND CONTENT LIKE '%' || #{content} || '%'
+		  </if>
+		  <if test="comment != null">
+		   AND COMMENT LIKE '%' ||  #{comment} || '%'
+		  </if>
+	</select>
+	
+	<!-- 게시글 리스트 조회 -->
+	<select id="selectBbsMstOne" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT BM.BBS_NO
+			 , BM.BBS_TYPE
+			 , BM.USR_ID
+			 , CU.NAME AS USR_NM
+			 , BM.TITLE
+			 , TO_CHAR(SUBSTR(BM.CONTENT, 1, 3000)) AS CONTENT
+			 , BM."COMMENT"
+			 , BM.VIEW_CNT
+			 , BM.WRT_STATE 
+			 , WRT_STATE.CMN_NM AS WRT_STATE_NM 
+			 , BM.DEL_YN 
+			 , BM.PRODUCT_ID 
+			 , TO_CHAR(BM.SYS_ENR_DTTM, 'YYYY. MM. DD') AS SYS_ENR_DTTM
+		  FROM BBS_MST BM
+		  	 , CMMN_USER CU
+			 , (
+		  	 	SELECT CC.CMN_CD 
+		 	 		 , CC.CMN_NM 
+		 	 	  FROM CMMN_CODE CC
+		 	 	 WHERE CC.DEL_YN	= 'N'
+		 	 	   AND CC.CMN_TYPE	= 'BBS_TYPE'
+				) BBS_TYPE
+		  	 , (
+		  	 	SELECT CC.CMN_CD 
+		 	 		 , CC.CMN_NM 
+		 	 	  FROM CMMN_CODE CC
+		 	 	 WHERE CC.DEL_YN	= 'N'
+		 	 	   AND CC.CMN_TYPE	= 'WRT_STATE'
+				) WRT_STATE
+		 WHERE 1=1
+		   AND BM.USR_ID = CU.ID
+		   AND BM.WRT_STATE = WRT_STATE.CMN_CD
+		   AND BM.BBS_TYPE = BBS_TYPE.CMN_CD
+		   AND BM.DEL_YN = 'N'
+		   AND BM.BBS_NO = #{bbs_no}
+  	 ]]>
+	</select>
+	
+	<!-- 게시글 입력 -->
+	<insert id="insertBoard" parameterType="java.util.HashMap">
+		<selectKey keyProperty="bbs_no" resultType="string" order="BEFORE">
+			SELECT FN_SEQ('B') FROM DUAL
+		</selectKey>
+		INSERT INTO BBS_MST
+					(
+					BBS_NO
+				  , BBS_TYPE
+				  , USR_ID
+				  , TITLE
+				  , VIEW_CNT
+				  , WRT_STATE
+				  , DEL_YN
+				  , SYS_ENR_ID
+				  , SYS_ENR_DTTM
+				  , SYS_CHG_ID
+				  , SYS_CHG_DTTM
+				  <if test="content != null">
+				  , CONTENT
+				  </if>
+				  <if test="comment != null">
+				  , COMMENT
+				  </if>
+				  <if test="product_id != null">
+				  , PRODUCT_ID
+				  </if>
+					)
+			VALUES (
+					#{bbs_no}
+				  , #{bbs_type}
+				  , #{id}
+				  , #{title}
+				  , 0
+				  , #{wrt_state}	
+				  , 'N'
+				  , #{id}
+				  , SYSDATE
+				  , #{id}
+				  , SYSDATE
+				  <if test="content != null">
+				  , #{content}
+				  </if>
+				  <if test="comment != null">
+				  , #{comment}
+				  </if>
+				  <if test="product_id != null">
+				  , #{product_id}
+				  </if>
+					)
+	</insert>
+	
+	<!-- 게시판 업데이트 -->
+	<update id="updateBbsMstInfo" parameterType="java.util.HashMap">
+		UPDATE BBS_MST
+		   SET SYS_CHG_DTTM = SYSDATE
+		   	<if test="id != null">
+		   	 , SYS_CHG_ID = #{id}
+		   	</if>
+		   	<if test="bbs_type != null">
+		   	 , BBS_TYPE = #{bbs_type}
+		   	</if>
+			<if test="title != null">
+		   	 , TITLE = #{title}
+		   	</if>
+		   	<if test="wrt_state != null">
+		   	 , WRT_STATE = #{wrt_state}
+		   	</if>
+		   	<if test="content != null">
+		 	 , CONTENT = #{content}
+		  	</if>
+		 	<if test="comment != null">
+		  	 , COMMENT = #{comment}
+		  	</if>
+		  	<if test="del_yn != null">
+		  	 , DEL_YN = #{del_yn}
+		  	</if>
+		   	<if test="view_cnt != null">
+		   	 , VIEW_CNT = VIEW_CNT + #{view_cnt}
+		   	</if> 
+		 WHERE BBS_NO = #{bbs_no}
+	</update>
+</mapper>
