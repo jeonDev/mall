@@ -1,0 +1,1108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shop.mall.repository.ProductDao">
+	
+	<!-- 상품 입력 -->
+	<insert id="insertProductMst" parameterType="java.util.HashMap">
+		<selectKey keyProperty="product_id" resultType="string" order="BEFORE">
+			SELECT FN_SEQ('PM') FROM DUAL
+		</selectKey>
+		INSERT INTO PRODUCT_MST 
+					(
+					PRODUCT_ID
+				  , PRODUCT_NAME
+				  , PRODUCT_DETAIL
+				  , PRICE
+				  , PRODUCT_STATE
+				  , PRODUCT_TYPE
+				  , PRODUCT_VIEW
+				  , DEL_YN
+				  , SYS_ENR_ID
+				  , SYS_ENR_DTTM
+				  , SYS_CHG_ID
+				  , SYS_CHG_DTTM
+					)
+			VALUES (
+					#{product_id}
+				  , #{product_name}
+				  , #{product_detail}
+				  , #{price}
+				  , #{product_state}
+				  , #{product_type}
+				  , 0
+				  , 'N'
+				  , #{id}
+				  , SYSDATE
+				  , #{id}
+				  , SYSDATE
+					)
+	</insert>
+	
+	<!-- 상품 상세내용 입력 -->
+	<insert id="insertProductList" parameterType="java.util.HashMap">
+		<selectKey keyProperty="product_no" resultType="string" order="BEFORE">
+			SELECT FN_SEQ('PL') FROM DUAL
+		</selectKey>
+		INSERT INTO PRODUCT_LIST 
+					(
+					PRODUCT_NO
+				  , PRODUCT_ID
+				  , PRODUCT_SIZE
+				  , PRODUCT_CNT
+				  , DEL_YN
+				  , PRICE_DISCOUNT
+				  , SYS_ENR_ID
+				  , SYS_ENR_DTTM
+				  , SYS_CHG_ID
+				  , SYS_CHG_DTTM
+					)
+			VALUES (
+					#{product_no}
+				  , #{product_id}
+				  , #{product_size}
+				  , #{product_cnt}
+				  , 'N'
+				  , #{price_discount}
+				  , #{id}
+				  , SYSDATE
+				  , #{id}
+				  , SYSDATE
+					)
+	</insert>
+	
+	<!-- 상품 이미지 등록 -->
+	<insert id="insertProductFile" parameterType="java.util.HashMap">
+		<selectKey keyProperty="file_id" resultType="string" order="BEFORE">
+			SELECT FN_SEQ('PF') FROM DUAL
+		</selectKey>
+		INSERT INTO PRODUCT_FILE
+					(
+					FILE_ID
+				  , PRODUCT_ID
+				  , FILE_SRC
+				  , FILE_NM
+				  , FILE_REAL_NM
+				  , SRT_ODR
+				  , DEL_YN
+				  , SYS_ENR_ID
+				  , SYS_ENR_DTTM
+				  , SYS_CHG_ID
+				  , SYS_CHG_DTTM
+					)
+			VALUES (
+					#{file_id}
+				  , #{product_id}
+				  , #{file_src}
+				  , #{file_nm}
+				  , #{file_real_nm}
+				  <choose>
+				  	<when test="srt_odr != null">
+				  , #{srt_odr}	
+				  	</when>
+				  	<otherwise>
+				  , (
+				  	SELECT NVL(MAX(SRT_ODR), 0) + 1
+				  	  FROM PRODUCT_FILE 
+				  	 WHERE PRODUCT_ID = #{product_id}
+				  	   AND DEL_YN = 'N'
+				  	)
+				  	</otherwise>
+				  </choose>
+				  , 'N'
+				  , #{id}
+				  , SYSDATE
+				  , #{id}
+				  , SYSDATE
+					)
+	</insert>
+	
+	<!-- 상품 정보 수정 -->
+	<update id="updateProductMst" parameterType="java.util.HashMap">
+		UPDATE PRODUCT_MST
+		   SET SYS_CHG_DTTM = SYSDATE
+			 <if test="id != null">
+			 , SYS_CHG_ID = #{id}
+			 </if>
+			 <if test="product_name != null">
+			 , PRODUCT_NAME = #{product_name}
+			 </if>
+			 <if test="product_detail != null">
+			 , PRODUCT_DETAIL = #{product_detail}
+			 </if>
+			 <if test="price != null">
+			 , PRICE = #{price}
+			 </if>
+			 <if test="product_state != null">
+			 , PRODUCT_STATE = #{product_state}
+			 </if>
+			 <if test="product_type != null">
+			 , PRODUCT_TYPE = #{product_type}
+			 </if>
+			 <if test="del_yn != null">
+			 , DEL_YN = #{del_yn}
+			 </if>
+			 <if test="product_view != null">
+			 , PRODUCT_VIEW = PRODUCT_VIEW + 1
+			 </if>
+		 WHERE PRODUCT_ID = #{product_id}
+	</update>
+	
+	<!-- 상품 상세번호 조회 -->
+	<select id="selectProductNoList" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT PRODUCT_NO
+		  FROM PRODUCT_LIST
+		 WHERE PRODUCT_ID = #{product_id}
+		   AND DEL_YN = 'N'
+	</select>
+	
+	<!-- 상품 상세 정보 수정 -->
+	<update id="updateProductList" parameterType="java.util.HashMap">
+		UPDATE PRODUCT_LIST
+		   SET SYS_CHG_ID = #{id}
+			 , SYS_CHG_DTTM = SYSDATE
+			 <if test="product_size != null">
+			 , PRODUCT_SIZE = #{product_size}
+			 </if>
+			 <if test="product_cnt != null">
+			 , PRODUCT_CNT = #{product_cnt}
+			 </if>
+			 <if test="price_discount != null">
+			 , PRICE_DISCOUNT = #{price_discount}
+			 </if>
+			 <if test="del_yn != null">
+			 , DEL_YN = #{del_yn}
+			 </if>
+		 WHERE 
+		 	<choose>
+		 		<when test="product_id != null">
+		 	   PRODUCT_ID = #{product_id}
+		 		</when>
+		 		<otherwise>
+		 	   PRODUCT_NO = #{product_no}
+		 		</otherwise>
+		 	</choose>
+	</update>
+	
+	<!-- 상품 구매 시 재고 수량 체크 -->
+	<update id="updateProductListCnt" parameterType="java.util.HashMap">
+		UPDATE PRODUCT_LIST
+		   SET SYS_CHG_ID = #{id}
+		   	 , SYS_CHG_DTTM = SYSDATE
+		   	 , PRODUCT_CNT = PRODUCT_CNT - #{product_cnt}
+		 WHERE PRODUCT_NO = #{product_no}
+	</update>
+	
+	<!-- 상품 파일번호 조회 -->
+	<select id="selectProductFileNoList" parameterType="java.lang.String" resultType="java.util.HashMap">
+		SELECT file_id
+			 , srt_odr
+			 , file_src
+			 , file_real_nm
+		  FROM PRODUCT_FILE
+		 WHERE DEL_YN = 'N'
+		   AND PRODUCT_ID = #{product_id}
+	</select>
+	
+	<!-- 상품 이미지 수정 -->
+	<update id="updateProductFile" parameterType="java.util.HashMap">
+		UPDATE PRODUCT_FILE
+		   SET SYS_CHG_ID = #{id}
+			 , SYS_CHG_DTTM = SYSDATE
+			 <if test="file_src != null">
+			 , FILE_SRC = #{file_src}
+			 </if>
+			 <if test="file_nm != null">
+			 , FILE_NM = #{file_nm}
+			 </if>
+			 <if test="file_real_nm != null">
+			 , FILE_REAL_NM = #{file_real_nm}
+			 </if>
+			 <if test="srt_odr != null">
+			 , SRT_ODR = #{srt_odr}
+			 </if>
+			 <if test="del_yn != null">
+			 , DEL_YN = #{del_yn}
+			 </if>
+		 WHERE FILE_ID = #{file_id}
+	</update>
+	
+	<!-- 상품 목록 조회 -->
+	<select id="selectProductList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT A.PRODUCT_ID
+			 , A.PRODUCT_NAME
+			 , A.PRODUCT_DETAIL
+			 , A.REP_DTTM
+			 , A.PRICE
+			 , A.PRICE_DISCOUNT
+			 , ROUND(A.PRICE - (A.PRICE * (A.PRICE_DISCOUNT / 100))) AS FINAL_PRICE
+			 , A.PRODUCT_STATE
+			 , A.PRODUCT_STATE_NM
+			 , A.PRODUCT_TYPE
+			 , A.PRODUCT_TYPE_NM
+			 , A.PRODUCT_VIEW
+			 , A.SALES_RATE
+			 , A.PRODUCT_SIZE
+			 , A.PRODUCT_CNT
+			 , A.FILE_SRC
+			 , A.FILE_ID
+			 , A.FILE_NM
+			 , A.FILE_REAL_NM
+			 , A.FILE_SRC || A.FILE_REAL_NM AS IMG_SRC
+		  FROM (
+		  		SELECT A.PRODUCT_ID
+					 , MAX(A.PRODUCT_NAME) AS PRODUCT_NAME
+					 , MAX(A.PRODUCT_DETAIL) AS PRODUCT_DETAIL
+					 , MAX(A.REP_DTTM) AS REP_DTTM
+					 , MAX(A.PRICE) AS PRICE
+					 , MAX(A.PRICE_DISCOUNT) AS PRICE_DISCOUNT
+					 , MAX(A.PRODUCT_STATE) AS PRODUCT_STATE
+					 , MAX(A.PRODUCT_STATE_NM) AS PRODUCT_STATE_NM
+					 , MAX(A.PRODUCT_TYPE) AS PRODUCT_TYPE
+					 , MAX(A.PRODUCT_TYPE_NM) AS PRODUCT_TYPE_NM
+					 , MAX(A.PRODUCT_VIEW) AS PRODUCT_VIEW
+					 , MAX(A.SALES_RATE) AS SALES_RATE
+					 , MAX(A.PRODUCT_SIZE) AS PRODUCT_SIZE
+					 , MAX(A.PRODUCT_CNT) AS PRODUCT_CNT
+					 , MAX(PF.FILE_SRC) AS FILE_SRC
+					 , MAX(PF.FILE_ID) AS FILE_ID
+					 , MAX(PF.FILE_NM) AS FILE_NM
+					 , MAX(PF.FILE_REAL_NM) AS FILE_REAL_NM
+					 , ROW_NUMBER() OVER(ORDER BY 	<choose>
+			 											<when test="order == 'sales_rate'">
+			 												MAX(A.SALES_RATE) DESC
+			 											</when>
+			 											<when test="order == 'product_view'">
+			 												MAX(A.PRODUCT_VIEW) DESC
+			 											</when>
+			 											<otherwise>
+			 												MAX(A.PRODUCT_ID) DESC
+			 											</otherwise>
+			 										</choose>) AS RN
+				  FROM (
+				  		SELECT PM.PRODUCT_ID
+							 , MAX(PM.PRODUCT_NAME) AS PRODUCT_NAME
+							 , MAX(TO_CHAR(PM.PRODUCT_DETAIL)) AS PRODUCT_DETAIL
+							 , MAX(TO_CHAR(PM.SYS_ENR_DTTM, 'YYYYMMDD')) AS REP_DTTM
+							 , MAX(PM.PRICE) AS PRICE
+							 , MAX(NVL(PL.PRICE_DISCOUNT, 0)) AS PRICE_DISCOUNT
+							 , MAX(PM.PRODUCT_STATE) AS PRODUCT_STATE
+							 , MAX(P_STATE.CMN_NM) AS PRODUCT_STATE_NM
+							 , MAX(PM.PRODUCT_TYPE) AS PRODUCT_TYPE
+							 , MAX(P_TYPE.TYPE_NM) AS PRODUCT_TYPE_NM
+							 , MAX(PM.PRODUCT_VIEW) AS PRODUCT_VIEW
+							 , MAX(PM.SALES_RATE) AS SALES_RATE
+							 , LISTAGG(PL.PRODUCT_SIZE ,' ') WITHIN GROUP(ORDER BY PRODUCT_NO) AS PRODUCT_SIZE
+							 , SUM(PL.PRODUCT_CNT) AS PRODUCT_CNT
+						  FROM (
+						  		SELECT PM.*
+						  			 , TO_NUMBER(FN_SALES_RATE(PRODUCT_ID)) AS SALES_RATE
+						  		  FROM PRODUCT_MST PM
+						  		 WHERE PM.DEL_YN = 'N'
+						  		 <if test="admin == null">
+						  		   AND PM.PRODUCT_STATE = '001' /* 판매중 */
+						  		 </if>
+						  		) PM
+							 , PRODUCT_LIST PL
+							 , (
+						  	 	SELECT TYPE_CD
+						  	 		 , TYPE_NM 
+						  	 	  FROM PRODUCT_TYPE
+						  	 	 WHERE DEL_YN	= 'N'
+						  	 	) P_TYPE
+							 , (
+						  	 	SELECT CMN_CD
+						  	 		 , CMN_NM 
+						  	 	  FROM CMMN_CODE
+						  	 	 WHERE CMN_TYPE = 'PRODUCT_STATE'
+						  	 	   AND DEL_YN	= 'N'
+						  	 	) P_STATE
+						 WHERE PM.PRODUCT_ID 	= PL.PRODUCT_ID(+)
+						   AND PM.PRODUCT_STATE	= P_STATE.CMN_CD
+						   AND PM.PRODUCT_TYPE	= P_TYPE.TYPE_CD
+						   <if test="admin == null">
+						   AND PL.DEL_YN 	 = 'N'
+						   </if>
+						 GROUP BY PM.PRODUCT_ID
+				  		) A
+				  	 , (
+					 	SELECT FILE_ID
+					  		 , PRODUCT_ID
+					  		 , FILE_SRC
+					  		 , FILE_NM
+					  		 , FILE_REAL_NM
+					  		 , SRT_ODR
+					  	  FROM PRODUCT_FILE
+					  	 WHERE DEL_YN = 'N'
+					  	   AND SRT_ODR = 1
+					  	 ORDER BY SRT_ODR
+					 	) PF
+				 WHERE A.PRODUCT_ID = PF.PRODUCT_ID(+)
+				 <if test="productType != null">
+				   AND (
+				   	   A.PRODUCT_TYPE = #{productType}
+				    OR A.PRODUCT_TYPE IN (
+				    					 SELECT TYPE_CD
+				    					   FROM PRODUCT_TYPE
+				    					  WHERE UP_CD = #{productType} 
+				    					 )
+				   		)
+				 </if>
+				 <if test="productState != null">
+				   AND A.PRODUCT_STATE = #{productState}
+				 </if>
+				 GROUP BY A.PRODUCT_ID
+		  		) A
+		 WHERE A.RN BETWEEN #{start} AND #{end}
+		<choose>
+			<when test="order == 'sales_rate'">
+				ORDER BY A.SALES_RATE DESC
+			</when>
+			<when test="order == 'product_view'">
+				ORDER BY A.PRODUCT_VIEW DESC
+			</when>
+			<otherwise>
+				ORDER BY A.PRODUCT_ID DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 상품 목록 건 수 조회 -->
+	<select id="selectProductListCount" parameterType="java.util.HashMap" resultType="int">
+		SELECT COUNT(*)
+		  FROM (
+		  		SELECT PM.PRODUCT_ID
+				  FROM (
+				  		SELECT PM.*
+				  			 , FN_SALES_RATE(PRODUCT_ID) AS SALES_RATE
+				  		  FROM PRODUCT_MST PM
+				  		 WHERE PM.DEL_YN = 'N'
+				  		   AND PM.PRODUCT_STATE = '001' /* 판매중 */
+				  		) PM
+					 , PRODUCT_LIST PL
+					 , (
+					 	SELECT FILE_ID
+					  		 , PRODUCT_ID
+					  		 , FILE_SRC
+					  		 , FILE_NM
+					  		 , FILE_REAL_NM
+					  		 , SRT_ODR
+					  	  FROM PRODUCT_FILE
+					  	 WHERE DEL_YN = 'N'
+					 	) PF
+					 , (
+				  	 	SELECT TYPE_CD
+				  	 		 , TYPE_NM 
+				  	 	  FROM PRODUCT_TYPE
+				  	 	 WHERE DEL_YN	= 'N'
+				  	 	) P_TYPE
+					 , (
+				  	 	SELECT CMN_CD
+				  	 		 , CMN_NM 
+				  	 	  FROM CMMN_CODE
+				  	 	 WHERE CMN_TYPE = 'PRODUCT_STATE'
+				  	 	   AND DEL_YN	= 'N'
+				  	 	) P_STATE
+				 WHERE PM.PRODUCT_ID 	= PL.PRODUCT_ID(+)
+				   AND PM.PRODUCT_ID	= PF.PRODUCT_ID(+)
+				   AND PM.PRODUCT_STATE	= P_STATE.CMN_CD
+				   AND PM.PRODUCT_TYPE	= P_TYPE.TYPE_CD
+				   AND PL.DEL_YN 	 = 'N'
+				   <if test="productType != null">
+				   AND (
+				   	   PM.PRODUCT_TYPE = #{productType}
+				    OR PM.PRODUCT_TYPE IN (
+				    					 SELECT TYPE_CD
+				    					   FROM PRODUCT_TYPE
+				    					  WHERE UP_CD = #{productType} 
+				    					 )
+				   		)
+				 	</if>
+				 	<if test="productState != null">
+				  	AND PM.PRODUCT_STATE = #{productState}
+				 	</if>
+				 GROUP BY PM.PRODUCT_ID
+		  		) A
+	</select>
+	
+	<!-- 상품 사이즈 리스트 조회 -->
+	<select id="selectProductSizeList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT PL.PRODUCT_NO
+			 , MAX(PL.PRODUCT_ID) AS PRODUCT_ID
+			 , MAX(PL.PRODUCT_SIZE) AS PRODUCT_SIZE
+			 , NVL(MAX(PL.PRODUCT_CNT), 0) AS PRODUCT_CNT
+			 , MAX(PL.DEL_YN) AS DEL_YN
+			 , NVL(MAX(PRICE_DISCOUNT), 0) AS PRICE_DISCOUNT 
+			 , NVL(MAX(FN_TOT_PRICE(PL.PRODUCT_NO)), 0) AS TOT_PRICE
+			 , MAX(PF.FILE_ID) AS FILE_ID
+			 , MAX(PF.FILE_NM) AS FILE_NM
+			 , MAX(PF.FILE_REAL_NM) AS FILE_REAL_NM
+			 , MAX(PF.FILE_SRC) || MAX(PF.FILE_REAL_NM) AS IMG_SRC
+			 , NVL(SUM(PP.PRODUCT_CNT), 0) AS SALES_RATE
+			 , NVL(SUM(PP.BUY_PRICE), 0) AS BUY_PRICE
+			 , MAX(TO_CHAR(PL.SYS_ENR_DTTM, 'YYYYMMDD')) AS REP_DTTM
+		  FROM (
+		  		SELECT *
+		  		  FROM PRODUCT_LIST
+		  		 WHERE 1=1
+		]]>
+				<if test="product_id != null">
+		  		   AND PRODUCT_ID = #{product_id}
+		  		</if>
+		<![CDATA[
+		  		) PL
+		  	 , (
+			 	SELECT FILE_ID
+			  		 , PRODUCT_ID
+			  		 , FILE_SRC
+			  		 , FILE_NM
+			  		 , FILE_REAL_NM
+			  		 , SRT_ODR
+			  	  FROM PRODUCT_FILE
+			  	 WHERE DEL_YN = 'N'
+			  	   AND SRT_ODR = 1
+			 	) PF
+			 , (
+			 	SELECT PAYMENT_NO
+			 		 , PRODUCT_NO
+			 		 , PRODUCT_CNT
+			 		 , BUY_PRICE
+			 	  FROM PRODUCT_PAYMENT
+			 	 WHERE 1=1
+			 	   AND PAYMENT_YN = 'Y'
+			 	   AND PAYMENT_STATE(+) IN ('PC', 'DS', 'DD', 'DC', 'BC')    /* 결제완료, 배송 대기, 시작, 완료, 구매확정 */
+			 	) PP
+		 WHERE PL.PRODUCT_ID = PF.PRODUCT_ID
+		   AND PL.PRODUCT_NO = PP.PRODUCT_NO(+)
+		 GROUP BY PL.PRODUCT_NO
+		 ORDER BY PL.PRODUCT_NO
+		]]>
+	</select>
+	
+	<!-- 상품 상세 조회 -->
+	<select id="selectProductOne" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT A.PRODUCT_ID
+			 , MAX(A.PRODUCT_NAME) AS PRODUCT_NAME
+			 , MAX(A.PRODUCT_DETAIL) AS PRODUCT_DETAIL
+			 , MAX(A.PRODUCT_STATE) AS PRODUCT_STATE 
+			 , MAX(A.PRODUCT_STATE_NM) AS PRODUCT_STATE_NM
+			 , MAX(A.PRODUCT_TYPE) AS PRODUCT_TYPE 
+			 , MAX(A.PRODUCT_TYPE_NM) AS PRODUCT_TYPE_NM
+			 , MAX(A.PRODUCT_VIEW) AS PRODUCT_VIEW 
+			 , MAX(A.PRICE) AS PRICE 
+			 , MAX(A.DEL_YN) AS DEL_YN
+			 , MAX(A.PRODUCT_NO) AS PRODUCT_NO
+			 , MAX(A.PRODUCT_SIZE) AS PRODUCT_SIZE
+			 , MAX(A.PRODUCT_CNT) AS PRODUCT_CNT
+			 , MAX(FN_SALES_RATE(A.PRODUCT_ID)) AS SALES_RATE
+			 , MAX(A.TOP_PRICE_DISCOUNT) AS TOP_PRICE_DISCOUNT
+			 , MAX(A.PRICE_DISCOUNT) AS PRICE_DISCOUNT
+			 , LISTAGG(PF.FILE_ID, ' ') WITHIN GROUP(ORDER BY PF.SRT_ODR) AS FILE_ID 
+			 , LISTAGG(PF.FILE_NM, ' ') WITHIN GROUP(ORDER BY PF.SRT_ODR) AS FILE_NM 
+			 , LISTAGG(PF.FILE_REAL_NM, ' ') WITHIN GROUP(ORDER BY PF.SRT_ODR) AS FILE_REAL_NM 
+			 , MAX(PF.FILE_SRC) AS FILE_SRC
+		  FROM (
+				SELECT PM.PRODUCT_ID 
+					 , MAX(PM.PRODUCT_NAME) AS PRODUCT_NAME 
+					 , MAX(TO_CHAR(PM.PRODUCT_DETAIL)) AS PRODUCT_DETAIL 
+					 , MAX(PM.PRODUCT_STATE) AS PRODUCT_STATE
+					 , MAX(P_STATE.CMN_NM) AS PRODUCT_STATE_NM
+					 , MAX(PM.PRODUCT_TYPE) AS PRODUCT_TYPE 
+					 , MAX(P_TYPE.TYPE_NM) AS PRODUCT_TYPE_NM
+					 , MAX(PM.PRODUCT_VIEW) AS PRODUCT_VIEW 
+					 , MAX(PM.PRICE) AS PRICE
+					 , MAX(PM.DEL_YN) AS DEL_YN
+					 , MAX(PL.PRICE_DISCOUNT) AS TOP_PRICE_DISCOUNT
+					 , LISTAGG(NVL(PL.PRICE_DISCOUNT, '0'), ' ') WITHIN GROUP(ORDER BY PRODUCT_NO) AS PRICE_DISCOUNT
+					 , LISTAGG(PL.PRODUCT_NO, ' ') WITHIN GROUP(ORDER BY PRODUCT_NO) AS PRODUCT_NO
+					 , LISTAGG(PL.PRODUCT_SIZE, ' ') WITHIN GROUP(ORDER BY PRODUCT_NO) AS PRODUCT_SIZE
+					 , LISTAGG(PL.PRODUCT_CNT, ' ') WITHIN GROUP(ORDER BY PRODUCT_NO) AS PRODUCT_CNT
+				  FROM PRODUCT_MST PM
+				  	 , PRODUCT_LIST PL
+				  	 , (
+				 	 	SELECT CMN_CD
+				  	 		 , CMN_NM
+				  	 	  FROM CMMN_CODE
+				  	 	 WHERE CMN_TYPE = 'PRODUCT_STATE'
+				  	 	   AND DEL_YN	= 'N'
+				  	 	) P_STATE
+				  	 , (
+				  	 	SELECT TYPE_CD
+				  	 		 , TYPE_NM 
+				  	 	  FROM PRODUCT_TYPE
+				  	 	 WHERE DEL_YN	= 'N'
+				  	 	) P_TYPE
+				 WHERE PM.PRODUCT_ID 	= PL.PRODUCT_ID
+				   AND PM.PRODUCT_STATE = P_STATE.CMN_CD
+				   AND PM.PRODUCT_TYPE  = P_TYPE.TYPE_CD
+				   AND PM.DEL_YN		= 'N'
+				   AND PL.DEL_YN 		= 'N'
+				   AND PM.PRODUCT_ID 	= #{product_id}
+				 GROUP BY PM.PRODUCT_ID
+				) A
+			  , (
+			  	SELECT FILE_ID
+			  		 , PRODUCT_ID
+			  		 , FILE_SRC
+			  		 , FILE_NM
+			  		 , FILE_REAL_NM
+			  		 , SRT_ODR
+			  	  FROM PRODUCT_FILE
+			  	 WHERE DEL_YN = 'N'
+			  	   AND PRODUCT_ID = #{product_id}
+			 	) PF
+		 WHERE A.PRODUCT_ID = PF.PRODUCT_ID
+		 GROUP BY A.PRODUCT_ID
+	</select>
+	
+	<!-- 상품 리뷰 입력 -->
+	<insert id="insertProductReview" parameterType="java.util.HashMap">
+		<selectKey keyProperty="review_no" resultType="string" order="BEFORE">
+			SELECT FN_SEQ('PR') FROM DUAL
+		</selectKey>
+		INSERT INTO PRODUCT_REVIEW
+					(
+					REVIEW_NO
+				  , PAYMENT_NO
+				  , REVIEW_TYPE
+				  , USR_ID
+				  , TITLE
+				  , SCOPE
+				  , SYS_ENR_ID
+				  , SYS_ENR_DTTM
+				  , SYS_CHG_ID
+				  , SYS_CHG_DTTM
+				  , PRODUCT_NO
+				  <if test="content != null">
+				  , CONTENT
+				  </if>
+					)
+			VALUES (
+					#{review_no}
+				  , #{payment_no}
+				  , #{review_type}
+				  , #{id}
+				  , #{title}
+				  , #{scope}
+				  , #{id}
+				  , SYSDATE
+				  , #{id}
+				  , SYSDATE
+				  <choose>
+				  	<when test="product_no != null">
+				  , #{product_no}	
+				  	</when>
+				  	<otherwise>
+				  , (
+				  	SELECT PRODUCT_NO
+				  	  FROM PRODUCT_PAYMENT
+				  	 WHERE 1=1
+				  	   AND PAYMENT_NO = #{payment_no}
+				  	)
+				  	</otherwise>
+				  </choose>
+				  <if test="content != null">
+				  , #{content}
+				  </if>
+					)
+	</insert>
+	
+	<!-- 상품 리뷰 삭제 -->
+	<delete id="deleteProductReview" parameterType="java.util.HashMap">
+		DELETE FROM PRODUCT_REVIEW
+			  WHERE REVIEW_NO = #{review_no}
+	</delete>
+	
+	<!-- 상품 리뷰 별점 조회 -->
+	<select id="selectProductReviewScope" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT ROUND(AVG(SCOPE), 1) AS SCOPE_AVG
+			 , ROUND(MAX(SCOPE), 1) AS SCOPE_MAX
+			 , ROUND(MIN(SCOPE), 1) AS SCOPE_MIN
+			 , ROUND(AVG(SCOPE), 1) * 20 AS SCOPE_PER
+		  FROM PRODUCT_REVIEW PR
+		 	 , (
+		  	 	SELECT PM.PRODUCT_ID
+		  	 		 , PL.PRODUCT_NO
+		  	 	  FROM PRODUCT_MST PM
+		  	 	  	 , PRODUCT_LIST PL
+		  	 	 WHERE 1=1
+		  	 	   AND PM.PRODUCT_ID = PL.PRODUCT_ID 
+		  	 	) PL
+		 WHERE 1=1
+		   AND PR.PRODUCT_NO = PL.PRODUCT_NO 
+		   AND PR.PRODUCT_NO IN (
+	   							SELECT PRODUCT_NO
+	   							  FROM PRODUCT_LIST PL
+	   							 WHERE 1=1
+	   							   AND PL.PRODUCT_ID = #{product_id}
+		   						 )
+		 GROUP BY PL.PRODUCT_ID
+		]]>
+	</select>
+	
+	<!-- 상품 리뷰 조회(단일) -->
+	<select id="selectProductReviewDetail" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT REVIEW_NO
+			 , MAX(A.PAYMENT_NO) AS PAYMENT_NO
+			 , MAX(A.PRODUCT_NO) AS PRODUCT_NO
+			 , MAX(A.REVIEW_TYPE) AS REVIEW_TYPE
+			 , MAX(A.REVIEW_TYPE_NM) AS REVIEW_TYPE_NM
+			 , MAX(A.USR_ID) AS USR_ID
+			 , MAX(A.TITLE) AS TITLE
+			 , MAX(A.CONTENT) AS CONTENT
+			 , MAX(A.SCOPE) AS SCOPE
+			 , MAX(A.SCOPE_PER) AS SCOPE_PER
+			 , LISTAGG(CF.FILE_ID, ' ') WITHIN GROUP(ORDER BY CF.SRT_ODR) AS FILE_ID 
+			 , LISTAGG(CF.FILE_NM, ' ') WITHIN GROUP(ORDER BY CF.SRT_ODR) AS FILE_NM 
+			 , LISTAGG(CF.FILE_REAL_NM, ' ') WITHIN GROUP(ORDER BY CF.SRT_ODR) AS FILE_REAL_NM
+			 , MAX(CF.FILE_SRC) AS FILE_SRC
+		  FROM (
+				SELECT PR.REVIEW_NO
+					 , PR.PAYMENT_NO
+					 , PR.PRODUCT_NO 
+					 , PR.REVIEW_TYPE
+					 , FN_CMMN_CODE_NM(PR.REVIEW_TYPE, 'REVIEW_TYPE') AS REVIEW_TYPE_NM
+					 , PR.USR_ID 
+					 , PR.TITLE 
+					 , PR.CONTENT 
+					 , PR.SCOPE
+					 , PR.SCOPE * 20 AS SCOPE_PER
+				  FROM PRODUCT_REVIEW PR
+				 WHERE 1=1
+				   AND PAYMENT_NO  = #{payment_no}
+				   AND REVIEW_TYPE = #{review_type}
+				) A
+			 , (
+		 	 	SELECT FILE_ID
+		 	 		 , FILE_NM
+		 	 		 , FILE_REAL_NM
+		 	 		 , FILE_SRC
+		 	 		 , FILE_REF
+		 	 		 , SRT_ODR
+		 	 	  FROM CMMN_FILE CF
+		 	 	 WHERE CF.DEL_YN = 'N'
+		 	 	   AND CF.FILE_DIV = 'PRODUCT_REVIEW'
+		 	 	) CF
+		 WHERE A.REVIEW_NO = CF.FILE_REF(+)
+		 GROUP BY A.REVIEW_NO
+		]]>
+	</select>
+	
+	<!-- 상품 리뷰 조회(리스트)-->
+	<select id="selectProductReviewList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	<![CDATA[
+		SELECT A.REVIEW_NO
+			 , A.PAYMENT_NO
+			 , A.PRODUCT_NO 
+			 , A.REVIEW_TYPE
+			 , A.REVIEW_TYPE_NM
+			 , A.USR_ID 
+			 , A.USR_NM
+			 , A.TITLE 
+			 , A.CONTENT 
+			 , A.SCOPE
+			 , A.SCOPE_PER
+		  FROM (
+				SELECT REVIEW_NO
+					 , PAYMENT_NO
+					 , PRODUCT_NO 
+					 , REVIEW_TYPE
+					 , CMN_NM AS REVIEW_TYPE_NM
+					 , USR_ID 
+					 , CASE WHEN PR.REVIEW_TYPE <> 'PR003' THEN CU.NAME 
+					 	WHEN PR.REVIEW_TYPE = 'PR003' THEN SUBSTR(CU.NAME, 0, 1) || LPAD('*', LENGTH(CU.NAME), '*')
+					 	END AS USR_NM
+					 , TITLE 
+					 , CONTENT 
+					 , SCOPE
+					 , SCOPE * 20 AS SCOPE_PER
+					 , ROW_NUMBER() OVER(ORDER BY PR.SYS_ENR_DTTM DESC)AS RN
+				  FROM PRODUCT_REVIEW PR
+				 	 , CMMN_USER CU 
+				 	 , (
+				 	 	SELECT CC.CMN_CD 
+				 	 		 , CC.CMN_NM 
+				 	 	  FROM CMMN_CODE CC
+				 	 	 WHERE CC.DEL_YN	= 'N'
+				 	 	   AND CC.CMN_TYPE	= 'REVIEW_TYPE'
+				 	 	) CC
+				 WHERE PR.USR_ID  	  = CU.ID
+				   AND PR.REVIEW_TYPE = CC.CMN_CD
+				   AND PRODUCT_NO IN (
+		   							SELECT PRODUCT_NO
+		   							  FROM PRODUCT_LIST PL
+		   							 WHERE 1=1
+		   							   AND PL.PRODUCT_ID = #{product_id}
+			   						 ) 
+			]]>
+				   <if test="review_type != null">
+				   AND REVIEW_TYPE = #{review_type}
+				   </if>
+				) A
+		 WHERE A.RN BETWEEN #{start} AND #{end}
+	</select>
+	
+	<!-- 상품 리뷰 건수 조회 -->
+	<select id="selectProductReviewListCount" parameterType="java.util.HashMap" resultType="int">
+	<![CDATA[
+		SELECT COUNT(*)
+		  FROM PRODUCT_REVIEW PR
+		 	 , CMMN_USER CU 
+		 	 , (
+		 	 	SELECT CC.CMN_CD 
+		 	 		 , CC.CMN_NM 
+		 	 	  FROM CMMN_CODE CC
+		 	 	 WHERE CC.DEL_YN	= 'N'
+		 	 	   AND CC.CMN_TYPE	= 'REVIEW_TYPE'
+		 	 	) CC
+		 WHERE PR.USR_ID  	  = CU.ID
+		   AND PR.REVIEW_TYPE = CC.CMN_CD
+		   AND PRODUCT_NO IN (
+   							SELECT PRODUCT_NO
+   							  FROM PRODUCT_LIST PL
+   							 WHERE 1=1
+   							   AND PL.PRODUCT_ID = #{product_id}
+	   						 ) 
+	]]>
+		   <if test="review_type != null">
+		   AND REVIEW_TYPE = #{review_type}
+		   </if>
+	</select>
+	
+	<!-- 상품 리뷰 조회(이미지 추가) -->
+	<select id="selectProductReviewImgList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT A.REVIEW_NO
+			 , A.PAYMENT_NO
+			 , A.REVIEW_TYPE
+			 , A.REVIEW_TYPE_NM
+			 , A.PRODUCT_NO
+			 , A.USR_ID
+			 , A.USR_NM
+			 , A.TITLE
+			 , A.CONTENT
+			 , A.SCOPE
+			 , A.SCOPE * 20 AS SCOPE_PER
+			 , A.FILE_ID
+			 , A.FILE_NM
+			 , A.FILE_REAL_NM
+			 , A.FILE_SRC
+		  FROM (
+				SELECT REVIEW_NO
+					 , MAX(PR.PAYMENT_NO) AS PAYMENT_NO
+					 , MAX(PR.REVIEW_TYPE) AS REVIEW_TYPE
+					 , MAX(CC.CMN_NM ) AS REVIEW_TYPE_NM
+					 , MAX(PRODUCT_NO) AS PRODUCT_NO
+					 , MAX(USR_ID) AS USR_ID
+					 , MAX(CU.NAME) AS USR_NM
+					 , MAX(TITLE) AS TITLE
+					 , MAX(CONTENT) AS CONTENT
+					 , MAX(SCOPE) AS SCOPE
+					 , LISTAGG(CF.FILE_ID, ' ') WITHIN GROUP(ORDER BY CF.SRT_ODR) AS FILE_ID 
+					 , LISTAGG(CF.FILE_NM, ' ') WITHIN GROUP(ORDER BY CF.SRT_ODR) AS FILE_NM 
+					 , LISTAGG(CF.FILE_REAL_NM, ' ') WITHIN GROUP(ORDER BY CF.SRT_ODR) AS FILE_REAL_NM
+					 , MAX(CF.FILE_SRC) AS FILE_SRC
+					 , ROW_NUMBER() OVER(ORDER BY MAX(PR.SYS_ENR_DTTM) DESC ) AS RN
+				  FROM PRODUCT_REVIEW PR
+				 	 , CMMN_USER CU 
+				 	 , (
+				 	 	SELECT FILE_ID
+				 	 		 , FILE_NM
+				 	 		 , FILE_REAL_NM
+				 	 		 , FILE_SRC
+				 	 		 , FILE_REF
+				 	 		 , SRT_ODR
+				 	 	  FROM CMMN_FILE CF
+				 	 	 WHERE CF.DEL_YN = 'N'
+				 	 	   AND CF.FILE_DIV = 'PRODUCT_REVIEW'
+				 	 	) CF
+				 	 , (
+				 	 	SELECT CC.CMN_CD 
+				 	 		 , CC.CMN_NM 
+				 	 	  FROM CMMN_CODE CC
+				 	 	 WHERE CC.DEL_YN	= 'N'
+				 	 	   AND CC.CMN_TYPE	= 'REVIEW_TYPE'
+				 	 	) CC
+				 WHERE PR.USR_ID  	  = CU.ID
+				   AND PR.REVIEW_NO   = CF.FILE_REF(+)
+				   AND PR.REVIEW_TYPE = CC.CMN_CD(+)
+				   AND PR.PRODUCT_NO  IN (
+				   							SELECT PRODUCT_NO
+				   							  FROM PRODUCT_LIST PL
+				   							 WHERE 1=1
+				   							   AND PL.PRODUCT_ID = #{product_id}
+				   						 )
+				   AND REVIEW_TYPE 	  = #{review_type}
+				 GROUP BY PR.REVIEW_NO
+		  		) A 
+		  WHERE A.RN BETWEEN #{start} AND #{end}
+	</select>
+	
+	<!-- 상품 리뷰 조회(이미지 추가) 건수 조회 -->
+	<select id="selectProductReviewImgListCount" parameterType="java.util.HashMap" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*)
+		  FROM (
+				SELECT REVIEW_NO
+				  FROM PRODUCT_REVIEW PR
+				 	 , CMMN_USER CU 
+				 	 , (
+				 	 	SELECT FILE_ID
+				 	 		 , FILE_NM
+				 	 		 , FILE_REAL_NM
+				 	 		 , FILE_SRC
+				 	 		 , FILE_REF
+				 	 		 , SRT_ODR
+				 	 	  FROM CMMN_FILE CF
+				 	 	 WHERE CF.DEL_YN = 'N'
+				 	 	   AND CF.FILE_DIV = 'PRODUCT_REVIEW'
+				 	 	) CF
+				 	 , (
+				 	 	SELECT CC.CMN_CD 
+				 	 		 , CC.CMN_NM 
+				 	 	  FROM CMMN_CODE CC
+				 	 	 WHERE CC.DEL_YN	= 'N'
+				 	 	   AND CC.CMN_TYPE	= 'REVIEW_TYPE'
+				 	 	) CC
+				 WHERE PR.USR_ID  	  = CU.ID
+				   AND PR.REVIEW_NO   = CF.FILE_REF(+)
+				   AND PR.REVIEW_TYPE = CC.CMN_CD(+)
+				   AND PR.PRODUCT_NO  IN (
+				   							SELECT PRODUCT_NO
+				   							  FROM PRODUCT_LIST PL
+				   							 WHERE 1=1
+				   							   AND PL.PRODUCT_ID = #{product_id}
+				   						 )
+				   AND REVIEW_TYPE 	  = #{review_type}
+				 GROUP BY PR.REVIEW_NO
+		  		) A 
+		 ]]>
+	</select>
+	
+	<!-- 상품 장바구니 추가 -->
+	<insert id="insertProductBasket" parameterType="java.util.HashMap">
+		<![CDATA[
+		MERGE INTO PRODUCT_BASKET A
+			 USING (
+					SELECT #{product_no} AS PRODUCT_NO
+						 , #{id} AS USR_ID
+						 , #{product_cnt} AS PRODUCT_CNT
+					  FROM DUAL
+			  	   ) B
+				ON (A.PRODUCT_NO = B.PRODUCT_NO 
+				AND A.USR_ID 	 = B.USR_ID)
+			WHEN MATCHED THEN
+					UPDATE SET A.PRODUCT_CNT  = B.PRODUCT_CNT
+							 , A.SYS_ENR_DTTM = SYSDATE
+			WHEN NOT MATCHED THEN
+				INSERT (
+						BASKET_NO
+					  , PRODUCT_NO
+					  , USR_ID
+					  , PRODUCT_CNT
+					  , SYS_ENR_ID
+					  , SYS_ENR_DTTM
+						)
+				VALUES (
+						(SELECT FN_SEQ('PB') FROM DUAL)
+					  , B.PRODUCT_NO
+					  , B.USR_ID
+					  , B.PRODUCT_CNT
+					  , B.USR_ID
+					  , SYSDATE
+						)
+		]]>
+	</insert>
+	
+	<!-- 장바구니 제거 -->
+	<delete id="deleteProductBasket" parameterType="java.util.HashMap">
+		DELETE FROM PRODUCT_BASKET
+			  WHERE BASKET_NO IN
+			  	<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+			  		#{item}
+			  	</foreach>
+	</delete>
+	
+	<!-- 장바구니 수정(갯수) -->
+	<update id="updateProductBasket" parameterType="java.util.HashMap">
+		UPDATE PRODUCT_BASKET
+		   SET PRODUCT_CNT	= #{product_cnt}
+		     , SYS_ENR_ID 	= #{id}
+		     , SYS_ENR_DTTM = SYSDATE
+		 WHERE BASKET_NO = #{basket_no}
+	</update>
+	
+	<!-- 장바구니 조회 -->
+	<select id="selectProductBasket" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT A.PRODUCT_NO
+			 , A.PRODUCT_ID
+			 , A.BASKET_NO
+			 , A.PRODUCT_NAME
+			 , A.USR_ID
+			 , A.PRODUCT_CNT
+			 , A.PRODUCT_SIZE
+			 , A.PRICE
+			 , A.TOT_PRICE
+			 , A.PRICE_DISCOUNT
+			 , A.DISCOUNT_YN
+			 , A.TOT_PRICE * (NVL(A.PRICE_DISCOUNT, 0) / 100) AS TOT_DISCOUNT_PRICE
+			 , FN_TOT_PRICE(A.PRODUCT_NO) * A.PRODUCT_CNT AS FINAL_PRICE
+			 , A.PRODUCT_STOCK
+			 , A.STOCK_CHK
+			 , A.STOCK_CHK_NM
+			 , PF.FILE_SRC || PF.FILE_REAL_NM AS IMG_SRC
+			 , CASE WHEN STOCK_CHK <> 0 THEN 1
+			 	ELSE 0 END AS CHK_YN
+		  FROM (
+				SELECT PL.PRODUCT_NO
+					 , PM.PRODUCT_ID
+					 , PB.BASKET_NO
+					 , PM.PRODUCT_NAME
+					 , PB.USR_ID
+					 , PB.PRODUCT_CNT
+					 , PL.PRODUCT_SIZE
+					 , PM.PRICE
+					 , PM.PRICE * PB.PRODUCT_CNT AS TOT_PRICE
+					 , PL.PRICE_DISCOUNT
+					 , NVL2(PL.PRICE_DISCOUNT, 'Y', 'N') AS DISCOUNT_YN
+					 , PL.PRODUCT_CNT AS PRODUCT_STOCK
+					 , CASE WHEN PL.PRODUCT_CNT < 1 OR DECODE(PM.DEL_YN, 'Y', PM.DEL_YN, PL.DEL_YN) = 'Y' THEN 0
+					 		WHEN PL.PRODUCT_CNT < 5 AND PL.PRODUCT_CNT > 0 THEN 1
+					 		ELSE 2
+					 	  END AS STOCK_CHK
+					 , CASE WHEN DECODE(PM.DEL_YN, 'Y', PM.DEL_YN, PL.DEL_YN) = 'Y' THEN '판매 중지'
+					 		WHEN PL.PRODUCT_CNT < 1 THEN '재고 없음'
+					 		WHEN PL.PRODUCT_CNT < 5 AND PL.PRODUCT_CNT > 0 THEN '재고 ' || PL.PRODUCT_CNT || '개 남음'
+					 		ELSE '재고 5개 이상 남음'
+					 	  END AS STOCK_CHK_NM
+				  FROM PRODUCT_BASKET PB
+				  	 , PRODUCT_MST PM
+				  	 , PRODUCT_LIST PL
+				 WHERE PM.PRODUCT_ID = PL.PRODUCT_ID
+				   AND PL.PRODUCT_NO = PB.PRODUCT_NO
+				   AND PB.USR_ID = #{id}
+		]]>
+				 <if test="product_no != null">
+				   AND PB.PRODUCT_NO = #{product_no}
+				 </if>
+		<![CDATA[
+				) A
+			 , (
+			 	SELECT FILE_ID
+			  		 , PRODUCT_ID
+			  		 , FILE_SRC
+			  		 , FILE_NM
+			  		 , FILE_REAL_NM
+			  		 , SRT_ODR
+			  	  FROM PRODUCT_FILE
+			  	 WHERE DEL_YN = 'N'
+			  	   AND SRT_ODR = 1
+			  	 ORDER BY SRT_ODR
+			 	) PF
+		 WHERE A.PRODUCT_ID = PF.PRODUCT_ID
+		]]>
+		 
+	</select>
+	
+	<!-- 상품 카테고리 조회 -->
+	<select id="selectCategoryList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	<![CDATA[
+		SELECT TYPE_CD
+			 , TYPE_NM
+			 , UP_CD
+			 , DEL_YN
+			 , SRT_ODR
+			 , LEVEL - 1 AS LVL
+		  FROM PRODUCT_TYPE
+		 WHERE DEL_YN = 'N'
+		 START WITH UP_CD IS NULL
+	   CONNECT BY PRIOR TYPE_CD = UP_CD
+		 ORDER SIBLINGS BY SRT_ODR
+	]]>
+	</select>
+	
+	<!-- 카테고리별 판매량 조회 -->
+	<select id="selectProductCategoryStsCnt" resultType="java.util.HashMap">
+	<![CDATA[
+		SELECT NVL(PT.TYPE_CD, 0) AS TYPE_CD
+			 , MAX(PT.TYPE_NM) AS TYPE_NM
+			 , COUNT(A.PAYMENT_NO) AS CNT
+			 , NVL(SUM(A.BUY_PRICE), 0) AS BUY_PRICE
+		  FROM (
+		  		SELECT *
+		  		  FROM PRODUCT_TYPE PT
+		  		 WHERE TYPE_CD IS NOT NULL
+		  		) PT
+		  	 , (
+		  		SELECT PM.PRODUCT_TYPE 
+					 , PP.PAYMENT_NO 
+					 , PP.BUY_PRICE
+				  FROM PRODUCT_PAYMENT PP
+				  	 , PRODUCT_MST PM
+				  	 , PRODUCT_LIST PL
+				 WHERE PP.PRODUCT_NO = PL.PRODUCT_NO 
+				   AND PM.PRODUCT_ID = PL.PRODUCT_ID
+		  		) A
+		 WHERE PT.TYPE_CD = A.PRODUCT_TYPE(+)
+		 GROUP BY PT.TYPE_CD
+		 ORDER BY PT.TYPE_CD
+	]]>
+	</select>
+	
+	<!-- 월별 판매량(최근 12개월) -->
+	<select id="selectProductMonthStsCnt" resultType="java.util.HashMap">
+	<![CDATA[
+		SELECT DT.DTTM
+			 , COUNT(A.PAYMENT_NO) AS CNT
+			 , NVL(SUM(A.BUY_PRICE), 0) AS BUY_PRICE
+		  FROM (
+		  		SELECT TO_CHAR(ADD_MONTHS(SYSDATE,- (LEVEL-1)), 'YYYYMM') AS DTTM
+		  		  FROM DUAL
+				CONNECT BY ADD_MONTHS(SYSDATE,- (LEVEL-1)) >= ADD_MONTHS(SYSDATE,-11)
+		  		) DT
+			 , (
+			 	SELECT TO_CHAR(PP.PAYMENT_DTTM, 'YYYYMM') AS PAYMENT_DTTM
+					 , PP.PAYMENT_NO 
+					 , PP.BUY_PRICE
+				  FROM PRODUCT_PAYMENT PP
+				  	 , PRODUCT_MST PM
+				  	 , PRODUCT_LIST PL
+				 WHERE PP.PRODUCT_NO = PL.PRODUCT_NO 
+				   AND PM.PRODUCT_ID = PL.PRODUCT_ID
+			 	) A
+		 WHERE DT.DTTM = A.PAYMENT_DTTM(+)
+		 GROUP BY DT.DTTM
+		 ORDER BY DT.DTTM
+	]]>
+	</select>
+	
+	<!-- 성별 판매량 -->
+	<select id="selectProductSexStsCnt" resultType="java.util.HashMap">
+	<![CDATA[
+		SELECT CU.SEX
+			 , FN_CMMN_CODE_NM(CU.SEX, 'SEX') AS SEX_NM
+			 , COUNT(A.PAYMENT_NO) AS CNT
+		  FROM (
+		  		SELECT SEX
+		  			 , ID
+		  		  FROM CMMN_USER CU
+		  		) CU
+			 , (
+			 	SELECT PO.USR_ID
+			 		 , PP.PAYMENT_NO
+				  FROM PRODUCT_PAYMENT PP
+				  	 , PRODUCT_ORDER PO
+				  	 , PRODUCT_MST PM
+				  	 , PRODUCT_LIST PL
+				 WHERE PP.ORDER_NO  = PO.ORDER_NO 
+				   AND PP.PRODUCT_NO = PL.PRODUCT_NO
+				   AND PM.PRODUCT_ID = PL.PRODUCT_ID
+			 	) A
+		 WHERE CU.ID = A.USR_ID(+)
+		 GROUP BY CU.SEX
+		 ORDER BY CU.SEX
+	]]>
+	</select>
+</mapper>
