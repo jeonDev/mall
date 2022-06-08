@@ -15,8 +15,9 @@ spring:
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     #oracle.jdbc.OracleDriver
-    url: jdbc:log4jdbc:oracle:thin:@localhost:1521/xe 
-    #jdbc:oracle:thin:@localhost:1521/xe
+    url: jdbc:log4jdbc:oracle:thin:@localhost:1521/xe
+#    url: jdbc:log4jdbc:oracle:thin:@database-1.caxfonmlhixn.ap-northeast-2.rds.amazonaws.com:1521/ORCL
+#    jdbc:oracle:thin:@localhost:1521/xe
     username: shop
     password: shop7
     
