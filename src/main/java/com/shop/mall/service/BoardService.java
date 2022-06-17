@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.shop.mall.config.DuplicationException;
+import com.shop.mall.config.ErrorCode;
 import com.shop.mall.model.CmmnUser;
 import com.shop.mall.model.Paging;
 import com.shop.mall.repository.BoardDao;
@@ -77,7 +79,7 @@ public class BoardService {
 			result.put("message" , "게시글이 입력되었습니다.");
 			result.put("bbsNo", param.get("bbs_no"));
 		} else {
-			throw new Exception("서버 요청 시 에러가 발생하였습니다.\n관리자에게 문의바랍니다.");
+			throw new DuplicationException("서버 요청 시 에러가 발생하였습니다.\n관리자에게 문의바랍니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		return result;
@@ -103,7 +105,7 @@ public class BoardService {
 			result.put("message" , "게시글이 수정되었습니다.");
 			result.put("bbsNo", param.get("bbs_no"));
 		} else {
-			throw new Exception("서버 요청 시 에러가 발생하였습니다.\n관리자에게 문의바랍니다.");
+			throw new DuplicationException("서버 요청 시 에러가 발생하였습니다.\n관리자에게 문의바랍니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		return result;

@@ -10,13 +10,23 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import com.shop.mall.model.ErrorResponse;
+
 import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
 @Slf4j
 public class ExceptionController {
 
-	// 500 error
+	@ExceptionHandler(DuplicationException.class)
+	public ResponseEntity<Object> handleDuplicationException(DuplicationException ex){
+		log.info(ex.getClass().getName());
+		log.error("error", ex);
+		ErrorResponse response = new ErrorResponse(ex.getErrorCode()); 
+		
+		return new ResponseEntity<>(response, HttpStatus.valueOf(ex.getErrorCode().getStatus()));
+	}
+	
 	@ExceptionHandler({
 		SQLIntegrityConstraintViolationException.class
 	})
@@ -28,7 +38,6 @@ public class ExceptionController {
 		return new ResponseEntity<>(msg, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 	
-	// 500 error
 	@ExceptionHandler({
 		SQLException.class
 	})

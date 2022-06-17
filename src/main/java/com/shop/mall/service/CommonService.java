@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.shop.mall.config.DuplicationException;
+import com.shop.mall.config.ErrorCode;
 import com.shop.mall.model.CmmnUser;
 import com.shop.mall.repository.CommonDao;
 import com.shop.mall.util.StringUtil;
@@ -105,6 +107,10 @@ public class CommonService {
 			result.put("code"	, "0000");
 			result.put("msg"	, "인증번호 요청에 성공하였습니다.");
 			result.put("certSeq", certSeq);
+			
+			String certNum = StringUtil.nullToBlank(param.get("cert_num").toString());
+			result.put("certNum", certNum);
+			
 		} else {
 			result.put("code"	, "9999");
 			result.put("msg"	, "인증번호 요청에 실패하였습니다.");
@@ -117,13 +123,13 @@ public class CommonService {
 	 * 인증번호 확인
 	 * */
 	public HashMap<String, Object> certNumCheck(HashMap<String, Object> param) 
-			throws Exception{
+			throws Exception {
 		String certSeq = StringUtil.nullToBlank((String) param.get("cert_seq"));
 		String certNum = StringUtil.nullToBlank((String) param.get("cert_num"));
 		if(certNum.equals("")) {
-			throw new Exception("인증번호를 입력해주세요.");
+			throw new DuplicationException("인증번호를 입력해주세요.", ErrorCode.INTER_SERVER_ERROR);
 		} else if(certSeq.equals("")) {
-			throw new Exception("인증번호를 요청해주세요.");
+			throw new DuplicationException("인증번호를 요청해주세요.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		HashMap<String, Object> result = new HashMap<String, Object>();
@@ -138,10 +144,10 @@ public class CommonService {
 				result.put("msg"	, "인증번호 인증에 성공하였습니다.");
 				result.put("certYn"	, "Y");
 			} else {
-				throw new Exception("인증번호 인증에 실패하였습니다.");
+				throw new DuplicationException("인증번호 인증에 실패하였습니다.", ErrorCode.INTER_SERVER_ERROR);
 			}
 		} else {
-			throw new Exception("인증번호 유효기간이 지났습니다.");
+			throw new DuplicationException("인증번호 유효기간이 지났습니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		return result;

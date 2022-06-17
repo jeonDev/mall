@@ -53,6 +53,75 @@
 	</select>
 	
 	<!-- 공통메뉴 조회 -->
+	<!--
+	<select id="selectCmmnMenuList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	<![CDATA[
+		SELECT A.MENU_ID
+			 , A.MENU_NAME 
+			 , A.LVL 
+			 , A.LOC 
+			 , A.UP_ID 
+			 , A.SRT_ODR 
+			 , A.ROLE
+			 , A.COMPONENT
+			 , A.NAME
+			 , A.EXC_ROLE
+		  FROM (
+				SELECT A.MENU_ID 
+					 , MAX(A.MENU_NAME) AS MENU_NAME
+					 , MAX(A.LVL) AS LVL
+					 , MAX(A.LOC) AS LOC
+					 , MAX(A.UP_ID) AS UP_ID
+					 , MAX(A.SRT_ODR) AS SRT_ODR 
+					 , MAX(A.ROLES) AS ROLE
+					 , MAX(A.COMPONENT) AS COMPONENT
+					 , MAX(A.NAME) AS NAME
+					 , MAX(A.EXC_ROLE) AS EXC_ROLE
+				  FROM (
+						SELECT MENU_ID
+							 , MENU_NAME
+							 , LVL
+							 , LOC
+							 , UP_ID
+							 , SRT_ODR
+							 , ROLE AS ROLE
+							 , ROLE AS ROLES
+							 , MENU_DIV
+							 , COMPONENT
+							 , NAME
+							 , EXC_ROLE
+						  FROM CMMN_MENU A
+						 WHERE 1=1
+		]]>
+						<if test="menu_div != null">
+						   AND MENU_DIV = #{menu_div}
+						</if>
+		<![CDATA[
+						) A
+				 WHERE 1=1
+				   AND (
+				   		A.ROLE IN 
+		]]>
+				   		<foreach item="item" index="index" collection="roles" open="(" separator=", " close=")">
+					   		#{item}
+					 	</foreach>
+				    OR	A.ROLE IS NULL
+				   		)
+				   AND (
+				   		A.EXC_ROLE NOT IN 
+				   		<foreach item="item" index="index" collection="roles" open="(" separator=", " close=")">
+					   		#{item}
+					 	</foreach>
+		<![CDATA[
+				    OR	A.EXC_ROLE IS NULL
+				   		)
+				 GROUP BY A.MENU_ID 
+				) A
+		  ORDER BY SRT_ODR
+		]]>
+	</select>
+	-->
+	 
 	<select id="selectCmmnMenuList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
 	<![CDATA[
 		SELECT A.MENU_ID
@@ -122,6 +191,7 @@
 		  ORDER SIBLINGS BY SRT_ODR
 		]]>
 	</select>
+	
 	
 	<!-- 인증번호 요청 -->
 	<insert id="createCertNum" parameterType="java.util.HashMap">

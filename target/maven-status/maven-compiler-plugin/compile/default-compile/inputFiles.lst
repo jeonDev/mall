@@ -17,11 +17,14 @@ C:\z01_java\study\mall\src\main\java\com\shop\mall\controller\ProductController.
 C:\z01_java\study\mall\src\main\java\com\shop\mall\util\StringUtil.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\controller\UserController.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\config\ExceptionController.java
+C:\z01_java\study\mall\src\main\java\com\shop\mall\config\ErrorCode.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\config\SchedulerConfig.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\model\CmmnUser.java
+C:\z01_java\study\mall\src\main\java\com\shop\mall\config\DuplicationException.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\model\Paging.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\service\UserService.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\config\MyBatisConfig.java
+C:\z01_java\study\mall\src\main\java\com\shop\mall\model\ErrorResponse.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\service\BoardService.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\config\security\JwtTokenProvider.java
 C:\z01_java\study\mall\src\main\java\com\shop\mall\repository\BoardDao.java

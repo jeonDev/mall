@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.shop.mall.config.DuplicationException;
+import com.shop.mall.config.ErrorCode;
 import com.shop.mall.config.security.JwtTokenProvider;
 import com.shop.mall.model.CmmnUser;
 import com.shop.mall.repository.UserDao;
@@ -53,7 +55,7 @@ public class UserService{
 		CmmnUser cmmnUser = dao.selectUserName(id);
 		
 		if(cmmnUser != null) {
-			throw new Exception("이미 사용중인 아이디입니다.");
+			throw new DuplicationException("이미 사용중인 아이디입니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		if(role == null || role.equals("")) {
@@ -196,7 +198,7 @@ public class UserService{
     	
         // 1. Access Token 검증
         if (!jwtTokenProvider.validateToken(accessToken)) {
-        	throw new Exception("잘못된 접근입니다.");
+        	throw new DuplicationException("잘못된 접근입니다.", ErrorCode.INTER_SERVER_ERROR);
         }
 
         // 2. 해당 Access Token 유효시간 초기화
@@ -274,7 +276,7 @@ public class UserService{
     	if(upt > 0) {
     		result.put("message", "정보 수정이 완료되었습니다.");
     	} else {
-    		throw new Exception("오류가 발생하였습니다.\n관리자에게 문의바랍니다.");
+    		throw new DuplicationException("오류가 발생하였습니다.\n관리자에게 문의바랍니다.", ErrorCode.INTER_SERVER_ERROR);
     	}
     	return result;
     }

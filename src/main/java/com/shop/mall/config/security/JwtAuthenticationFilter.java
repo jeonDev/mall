@@ -43,23 +43,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
 		// 헤더에서 JWT를 받아옴.
 		String token = jwtTokenProvider.resolveToken(request);
 		
-		logger.info("Access Token : " + token);
-		logger.info(request.getRequestURI());
+		logger.info("Client URL : " + request.getRequestURI());
+		logger.info("Client IP : " + request.getRemoteAddr());
+		
 		// 유효한 토큰인지 확인.
 		if(token != null) {
+			
 			// Access Token 유효성 체크
 			if(jwtTokenProvider.validateToken(token)) {
+				
+				logger.info("Login Access Token : " + token);
+				
 				this.setConetxtHolder(token);
+				
+				String refreshToken = jwtTokenProvider.getRefreshToken(request);
+				
+				if(!"".equals(refreshToken) &&
+						!jwtTokenProvider.validateRefreshToken(refreshToken)) {
+					logger.info("Refresh Token 만료!");
+					// jwtTokenProvider.setRefreshToken(token, response);
+				}
 			}
-			
-			String refreshToken = jwtTokenProvider.getRefreshToken(request);
-			
-			if(!"".equals(refreshToken) &&
-					!jwtTokenProvider.validateRefreshToken(refreshToken)) {
-				System.out.println("Access Token 유효 !\nRefresh Token 유효기간 지남.");
-				//jwtTokenProvider.setRefreshToken(token, response);
-			}
-			
 		}
 		
 		filterChain.doFilter(request, response);

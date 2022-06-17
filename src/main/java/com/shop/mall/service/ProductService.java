@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 import org.json.simple.parser.ParseException;
@@ -12,14 +11,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.shop.mall.config.DuplicationException;
+import com.shop.mall.config.ErrorCode;
 import com.shop.mall.model.CmmnUser;
 import com.shop.mall.model.Paging;
 import com.shop.mall.repository.ProductDao;
@@ -96,7 +94,7 @@ public class ProductService {
 			// PRODUCT_LIST INSERT
 			resultList = insertProductList(listParam);
 		} else {
-			throw new Exception("오류가 발생하였습니다.\n관리자에게 문의바랍니다.");
+			throw new DuplicationException("오류가 발생하였습니다.\n관리자에게 문의바랍니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		// LIST 테이블 등록 성공
@@ -362,7 +360,7 @@ public class ProductService {
 			result.put("code", "0000");
 			result.put("message" , "리뷰 작성에 성공하였습니다.");
 		} else {
-			throw new Exception("오류가 발생하였습니다.\n관리자에게 문의바랍니다.");
+			throw new DuplicationException("오류가 발생하였습니다.\n관리자에게 문의바랍니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		return result;
@@ -509,7 +507,7 @@ public class ProductService {
 			result.put("code", "0000");
 			result.put("message", "상품이 추가되었습니다.");
 		} else {
-			throw new Exception("오류가 발생하였습니다.\n관리자에게 문의바랍니다.");
+			throw new DuplicationException("오류가 발생하였습니다.\n관리자에게 문의바랍니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		return result;
@@ -554,7 +552,7 @@ public class ProductService {
 		if(upt > 0) {
 			result.put("message", "상품이 변경되었습니다.");
 		} else {
-			throw new Exception("오류가 발생하였습니다.\n관리자에게 문의바랍니다.");
+			throw new DuplicationException("오류가 발생하였습니다.\n관리자에게 문의바랍니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		return result;

@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shop.mall.config.DuplicationException;
+import com.shop.mall.config.ErrorCode;
 import com.shop.mall.model.CmmnUser;
 import com.shop.mall.model.Paging;
 import com.shop.mall.repository.PaymentDao;
@@ -144,7 +146,8 @@ public class PaymentService {
 			this.insertPaymentState(stateParam);
 			
 			// 상품 가격 더한것과 총 금액이 같은지 체크. (Exception 관리자에게 문의!)
-			int buyPrice = ((BigDecimal) item.get("BUY_PRICE")).intValue();
+			int buyPrice = ((BigDecimal) item.get("BUY_PRICE")).intValue(); // Oracle
+//			int buyPrice = ((Long) item.get("BUY_PRICE")).intValue();
 			
 			payPrice2 += buyPrice;
 		}
@@ -153,7 +156,7 @@ public class PaymentService {
 		if(payPrice1 == payPrice2) {
 			result.put("orderInfo", orderParam);
 		} else {
-			throw new Exception("결제 시 오류가 발생하였습니다.\n관리자에게 문의바랍니다.");
+			throw new DuplicationException("결제 시 오류가 발생하였습니다.\n관리자에게 문의바랍니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		return result;
@@ -273,7 +276,7 @@ public class PaymentService {
 		if(ins > 0) {
 			result.put("msg", "주문 상태가 변경되었습니다.");
 		} else {
-			throw new Exception("오류가 발생하였습니다.\n관리자에게 문의바랍니다.");
+			throw new DuplicationException("오류가 발생하였습니다.\n관리자에게 문의바랍니다.", ErrorCode.INTER_SERVER_ERROR);
 		}
 		
 		return result;

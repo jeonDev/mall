@@ -2,7 +2,6 @@ package com.shop.mall.config.security;
 
 import java.util.Base64;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 
@@ -12,8 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,7 +19,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.shop.mall.model.CmmnUser;
-import com.shop.mall.service.UserService;
 import com.shop.mall.util.StringUtil;
 
 import io.jsonwebtoken.Claims;
@@ -38,9 +34,9 @@ public class JwtTokenProvider {
 	private String secretKey = "mallAccessProject";
 	private String refreshKey = "mallRefreshProject";
 	
-	// 토큰 유효시간 (30분)
+	// 토큰 유효시간
 	private long tokenValidTime = 30 * 60 * 1000L;
-	private long refreshTokenValidTime = 10 * 1000L;
+	private long refreshTokenValidTime = 7 * 24 * 60 * 60 * 1000L;
 	
 	// service
 	private final CustomUserDetailService userDetailsService;
@@ -148,15 +144,19 @@ public class JwtTokenProvider {
 		return user;
 	}
 	
+	/*
+	 * Refresh Token 재 발급
+	 * */
 	public void setRefreshToken(String token, HttpServletResponse response) {
-		System.out.println("리프레시 토큰 !!!!!!!!!!!!!!!!!!!!!!!!");
+		
 		HashMap<String, Object> loginParam = new HashMap<String, Object>();
-		System.out.println(token);
+		
 		CmmnUser user = this.getUserInfo();
 		
 		String refreshToken = this.createRefreshToken(user.getUsername());
 		
-		Cookie cookie = new Cookie("refreshToken", "11");
+		
+		Cookie cookie = new Cookie("refreshToken", refreshToken);
 		cookie.setHttpOnly(true);
 		cookie.setMaxAge(60*60*24*7);
 		
@@ -164,12 +164,14 @@ public class JwtTokenProvider {
 		loginParam.put("id", id);
 		loginParam.put("refreshToken", refreshToken);
 		
-		response.addCookie(cookie);
+		Cookie initCookie = new Cookie("refreshToken", null);
+		initCookie.setMaxAge(0); // 유효시간을 0으로 설정
+    	response.addCookie(initCookie); // 응답 헤더에 추가해서 없어지도록 함
 		
-		userDetailsService.setRefreshToken(loginParam);
+//		response.addCookie(cookie);
 		
-//		ResponseEntity.ok()
-//		.header(HttpHeaders.SET_COOKIE, cookie.toString());
+		System.out.println("새로운 Refresh Token : " + refreshToken);
+//		userDetailsService.setRefreshToken(loginParam);
 	}
 	
 	// Refresh Token으로 User 정보 추출
