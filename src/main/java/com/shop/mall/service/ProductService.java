@@ -2,6 +2,7 @@ package com.shop.mall.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -615,4 +616,32 @@ public class ProductService {
 	public List<HashMap<String, Object>> selectProductSexStsCnt(){
 		return dao.selectProductSexStsCnt();
 	}
+	
+	/*
+	 * 상품 재고 체크
+	 * */
+	public HashMap<String, Object> chkProductStock(List<HashMap<String, Object>> param) 
+			throws Exception{
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		
+		for(HashMap<String, Object> map : param) {
+			HashMap<String, Object> cntMap = dao.selectProductStock(map);
+			int buyCnt = (int) map.get("product_cnt");
+			int productCnt = ((BigDecimal) cntMap.get("PRODUCT_CNT")).intValue(); // Oracle
+			
+			if(buyCnt > productCnt) {
+				throw new DuplicationException("상품 재고가 부족합니다.", ErrorCode.INTER_SERVER_ERROR);
+			}
+		}
+		
+		return result;
+	}
+	
+	/*
+	 * 상품 재고 확인
+	 * */
+	public HashMap<String, Object> selectProductStock(HashMap<String, Object> param) {
+		return dao.selectProductStock(param);
+	}
+	
 }

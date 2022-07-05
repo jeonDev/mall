@@ -43,4 +43,6 @@ public interface ProductDao {
 	public List<HashMap<String, Object>> selectProductCategoryStsCnt();	// 카테고리별 상품 판매량
 	public List<HashMap<String, Object>> selectProductMonthStsCnt();	// 월별 상품 판매량
 	public List<HashMap<String, Object>> selectProductSexStsCnt();		// 성별 상품 판매량
+	
+	public HashMap<String, Object> selectProductStock(HashMap<String, Object> param);	// 상품 재고 체크
 }

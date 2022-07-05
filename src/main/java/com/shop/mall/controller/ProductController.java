@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,10 +37,6 @@ public class ProductController {
 	@PostMapping(value="/admin/product/create")
 	public ResponseEntity<HashMap<String, Object>> createProduct(@RequestPart HashMap<String, Object> param
 			, @RequestPart(required = false) MultipartFile[] files) throws Exception {
-		System.out.println("=============");
-		System.out.println(param);
-		System.out.println(files);
-		System.out.println("=============");
 		return new ResponseEntity<> (service.createProduct(param, files),
 				HttpStatus.OK);
 	}
@@ -239,4 +234,13 @@ public class ProductController {
 		return new ResponseEntity<> (service.selectProductSalesCnt(), HttpStatus.OK);
 	}
 	
+	/*
+	 * 상품 재고 체크
+	 * */
+	@PostMapping(value="/product/stock/check")
+	public ResponseEntity<HashMap<String ,Object>> chkProductStock(@RequestBody List<HashMap<String, Object>> param) 
+			throws Exception{
+		
+		return new ResponseEntity<> (service.chkProductStock(param), HttpStatus.OK);
+	}
 }

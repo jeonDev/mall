@@ -23,8 +23,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint{
 	public void commence(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authException) throws IOException, ServletException {
 		System.out.println("Unauthorized!!");
-		//response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요한 기능입니다.");
-		throw new DuplicationException(ErrorCode.SC_UNAUTHORIZED.getMessage(), ErrorCode.SC_UNAUTHORIZED);
+		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요한 기능입니다.");
+//		throw new DuplicationException(ErrorCode.SC_UNAUTHORIZED.getMessage(), ErrorCode.SC_UNAUTHORIZED);
 	}
 
 }

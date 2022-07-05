@@ -23,8 +23,8 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler{
 	public void handle(HttpServletRequest request, HttpServletResponse response,
 			AccessDeniedException accessDeniedException) throws IOException, ServletException {
 		log.info("Access Denied!!");
-		// response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 없는 사용자입니다.\n관리자에게 문의바랍니다.");
-		throw new DuplicationException(ErrorCode.SC_FORBIDDEN.getMessage(), ErrorCode.SC_FORBIDDEN);
+		response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 없는 사용자입니다.\n관리자에게 문의바랍니다.");
+//		throw new DuplicationException(ErrorCode.SC_FORBIDDEN.getMessage(), ErrorCode.SC_FORBIDDEN);
 	}
 
 }

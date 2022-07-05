@@ -490,6 +490,8 @@
 			 , MAX(A.PRODUCT_TYPE_NM) AS PRODUCT_TYPE_NM
 			 , MAX(A.PRODUCT_VIEW) AS PRODUCT_VIEW 
 			 , MAX(A.PRICE) AS PRICE 
+			 , ROUND(MAX(A.PRICE) - 
+			 		(MAX(A.PRICE) * (MAX(A.TOP_PRICE_DISCOUNT) / 100))) AS FINAL_PRICE
 			 , MAX(A.DEL_YN) AS DEL_YN
 			 , MAX(A.PRODUCT_NO) AS PRODUCT_NO
 			 , MAX(A.PRODUCT_SIZE) AS PRODUCT_SIZE
@@ -942,6 +944,7 @@
 			 , A.PRODUCT_NAME
 			 , A.USR_ID
 			 , A.PRODUCT_CNT
+			 , A.TOT_PRODUCT_CNT
 			 , A.PRODUCT_SIZE
 			 , A.PRICE
 			 , A.TOT_PRICE
@@ -962,6 +965,7 @@
 					 , PM.PRODUCT_NAME
 					 , PB.USR_ID
 					 , PB.PRODUCT_CNT
+					 , PL.PRODUCT_CNT AS TOT_PRODUCT_CNT
 					 , PL.PRODUCT_SIZE
 					 , PM.PRICE
 					 , PM.PRICE * PB.PRODUCT_CNT AS TOT_PRICE
@@ -1086,6 +1090,7 @@
 		SELECT CU.SEX
 			 , FN_CMMN_CODE_NM(CU.SEX, 'SEX') AS SEX_NM
 			 , NVL(SUM(A.PRODUCT_CNT), 0) AS CNT
+			 , NVL(SUM(A.BUY_PRICE), 0) AS BUY_PRICE
 		  FROM (
 		  		SELECT SEX
 		  			 , ID
@@ -1095,6 +1100,7 @@
 			 	SELECT PO.USR_ID
 			 		 , PP.PAYMENT_NO
 			 		 , PP.PRODUCT_CNT
+			 		 , PP.BUY_PRICE
 				  FROM PRODUCT_PAYMENT PP
 				  	 , PRODUCT_ORDER PO
 				  	 , PRODUCT_MST PM
@@ -1107,5 +1113,15 @@
 		 GROUP BY CU.SEX
 		 ORDER BY CU.SEX
 	]]>
+	</select>
+	
+	<!-- 상품 재고 확인 -->
+	<select id="selectProductStock" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
+		SELECT PRODUCT_CNT
+		  FROM PRODUCT_LIST
+		 WHERE 1=1
+		   AND PRODUCT_NO = #{product_no}
+		]]>
 	</select>
 </mapper>
