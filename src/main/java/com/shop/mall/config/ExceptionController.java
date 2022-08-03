@@ -27,6 +27,16 @@ public class ExceptionController {
 		return new ResponseEntity<>(response, HttpStatus.valueOf(ex.getErrorCode().getStatus()));
 	}
 	
+	@ExceptionHandler(NullPointerException.class)
+	public ResponseEntity<Object> handleNullException(final Exception ex) {
+		log.info(ex.getClass().getName());
+		log.error("error", ex);
+		HashMap<String, Object> msg = new HashMap<String, Object>();
+		msg.put("message", "서버 요청 시 에러가 발생하였습니다.\n관리자에게 문의바랍니다.");
+		return new ResponseEntity<>(msg, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
+	
 	@ExceptionHandler({
 		SQLIntegrityConstraintViolationException.class
 	})

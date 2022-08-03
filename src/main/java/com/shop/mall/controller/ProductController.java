@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +19,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.shop.mall.service.ProductService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
+@Slf4j
 public class ProductController {
-	
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
 	private ProductService service;
@@ -178,6 +178,42 @@ public class ProductController {
 	}
 	
 	/*
+	 * 좋아요 눌렀는지 체크
+	 * */
+	@GetMapping(value="/user/product/review/chk/{review_no}")
+	public ResponseEntity<HashMap<String, Object>> productReviewChk(@PathVariable("review_no") String reviewNo
+			, HashMap<String, Object> param){
+		param.put("review_no", reviewNo);
+		
+		return new ResponseEntity<> (service.selectReviewStateChk(param)
+				, HttpStatus.OK);
+	}
+	
+	/*
+	 * 상품 좋아요
+	 * */
+	@PostMapping(value="/user/product/review/insert/{review_no}")
+	public ResponseEntity<HashMap<String, Object>> productReviewUpdate(@PathVariable("review_no") String reviewNo
+			, HashMap<String, Object> param){
+		param.put("review_no", reviewNo);
+		
+		return new ResponseEntity<> (service.productReviewInsert(param)
+				, HttpStatus.OK);
+	}
+	
+	/*
+	 * 상품 좋아요 취소
+	 * */
+	@PostMapping(value="/user/product/review/delete/{review_no}")
+	public ResponseEntity<HashMap<String, Object>> productReviewDelete(@PathVariable("review_no") String reviewNo
+			, HashMap<String, Object> param){
+		param.put("review_no", reviewNo);
+		
+		return new ResponseEntity<> (service.productReviewDelete(param)
+				, HttpStatus.OK);
+	}
+	
+	/*
 	 * 상품 장바구니 추가
 	 * */
 	@PostMapping(value="/user/product/basket/add")
@@ -243,4 +279,15 @@ public class ProductController {
 		
 		return new ResponseEntity<> (service.chkProductStock(param), HttpStatus.OK);
 	}
+	
+	/*
+	 * 상품 등록 (Excel)
+	 * */
+	@PostMapping(value="/admin/product/create/excel")
+	public ResponseEntity<HashMap<String, Object>> createProductExcel(@RequestPart(required = false) MultipartFile file) 
+			throws ParseException, Exception{
+		
+		return new ResponseEntity<> (service.createProductExcel(file), HttpStatus.OK);
+	}
+
 }

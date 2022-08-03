@@ -637,10 +637,10 @@
 	   							SELECT PRODUCT_NO
 	   							  FROM PRODUCT_LIST PL
 	   							 WHERE 1=1
+		]]>
 	   							   AND PL.PRODUCT_ID = #{product_id}
 		   						 )
 		 GROUP BY PL.PRODUCT_ID
-		]]>
 	</select>
 	
 	<!-- 상품 리뷰 조회(단일) -->
@@ -696,16 +696,17 @@
 	<select id="selectProductReviewList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
 	<![CDATA[
 		SELECT A.REVIEW_NO
-			 , A.PAYMENT_NO
-			 , A.PRODUCT_NO 
-			 , A.REVIEW_TYPE
-			 , A.REVIEW_TYPE_NM
-			 , A.USR_ID 
-			 , A.USR_NM
-			 , A.TITLE 
-			 , A.CONTENT 
-			 , A.SCOPE
-			 , A.SCOPE_PER
+			 , MAX(A.PAYMENT_NO) AS PAYMENT_NO
+			 , MAX(A.PRODUCT_NO) AS PRODUCT_NO
+			 , MAX(A.REVIEW_TYPE) AS REVIEW_TYPE
+			 , MAX(A.REVIEW_TYPE_NM) AS REVIEW_TYPE_NM
+			 , MAX(A.USR_ID) AS USR_ID
+			 , MAX(A.USR_NM) AS USR_NM
+			 , MAX(A.TITLE) AS TITLE
+			 , MAX(A.CONTENT) AS CONTENT
+			 , MAX(A.SCOPE) AS SCOPE
+			 , MAX(A.SCOPE_PER) AS SCOPE_PER
+			 , COUNT(RS.REVIEW_NO) AS GOODS_CNT
 		  FROM (
 				SELECT REVIEW_NO
 					 , PAYMENT_NO
@@ -720,7 +721,7 @@
 					 , CONTENT 
 					 , SCOPE
 					 , SCOPE * 20 AS SCOPE_PER
-					 , ROW_NUMBER() OVER(ORDER BY PR.SYS_ENR_DTTM DESC)AS RN
+					 , ROW_NUMBER() OVER(ORDER BY PR.SYS_ENR_DTTM DESC) AS RN
 				  FROM PRODUCT_REVIEW PR
 				 	 , CMMN_USER CU 
 				 	 , (
@@ -743,7 +744,10 @@
 				   AND REVIEW_TYPE = #{review_type}
 				   </if>
 				) A
+			 , REVIEW_STATE RS
 		 WHERE A.RN BETWEEN #{start} AND #{end}
+		   AND A.REVIEW_NO = RS.REVIEW_NO
+		 GROUP BY A.REVIEW_NO
 	</select>
 	
 	<!-- 상품 리뷰 건수 조회 -->
@@ -775,6 +779,7 @@
 	
 	<!-- 상품 리뷰 조회(이미지 추가) -->
 	<select id="selectProductReviewImgList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<![CDATA[
 		SELECT A.REVIEW_NO
 			 , A.PAYMENT_NO
 			 , A.REVIEW_TYPE
@@ -785,30 +790,86 @@
 			 , A.TITLE
 			 , A.CONTENT
 			 , A.SCOPE
-			 , A.SCOPE * 20 AS SCOPE_PER
+			 , A.SCOPE_PER
 			 , A.FILE_ID
 			 , A.FILE_NM
 			 , A.FILE_REAL_NM
 			 , A.FILE_SRC
+			 , A.PRODUCT_ID
+			 , A.PRODUCT_SIZE
+			 , A.GOODS_CNT
 		  FROM (
-				SELECT REVIEW_NO
-					 , MAX(PR.PAYMENT_NO) AS PAYMENT_NO
-					 , MAX(PR.REVIEW_TYPE) AS REVIEW_TYPE
-					 , MAX(CC.CMN_NM ) AS REVIEW_TYPE_NM
-					 , MAX(PRODUCT_NO) AS PRODUCT_NO
-					 , MAX(USR_ID) AS USR_ID
-					 , MAX(CU.NAME) AS USR_NM
-					 , MAX(TITLE) AS TITLE
-					 , MAX(CONTENT) AS CONTENT
-					 , MAX(SCOPE) AS SCOPE
+				SELECT A.REVIEW_NO
+					 , MAX(A.PAYMENT_NO) AS PAYMENT_NO
+					 , MAX(A.REVIEW_TYPE) AS REVIEW_TYPE
+					 , MAX(A.REVIEW_TYPE_NM) AS REVIEW_TYPE_NM
+					 , MAX(A.PRODUCT_NO) AS PRODUCT_NO
+					 , MAX(A.USR_ID) AS USR_ID
+					 , MAX(A.USR_NM) AS USR_NM
+					 , MAX(A.TITLE) AS TITLE
+					 , MAX(A.CONTENT) AS CONTENT
+					 , MAX(A.SCOPE) AS SCOPE
+					 , MAX(A.SCOPE) * 20 AS SCOPE_PER
+					 , MAX(A.GOODS_CNT) AS GOODS_CNT
 					 , LISTAGG(CF.FILE_ID, ' ') WITHIN GROUP(ORDER BY CF.SRT_ODR) AS FILE_ID 
 					 , LISTAGG(CF.FILE_NM, ' ') WITHIN GROUP(ORDER BY CF.SRT_ODR) AS FILE_NM 
 					 , LISTAGG(CF.FILE_REAL_NM, ' ') WITHIN GROUP(ORDER BY CF.SRT_ODR) AS FILE_REAL_NM
 					 , MAX(CF.FILE_SRC) AS FILE_SRC
-					 , ROW_NUMBER() OVER(ORDER BY MAX(PR.SYS_ENR_DTTM) DESC ) AS RN
-				  FROM PRODUCT_REVIEW PR
-				 	 , CMMN_USER CU 
-				 	 , (
+					 , MAX(PL.PRODUCT_ID) AS PRODUCT_ID
+					 , MAX(PL.PRODUCT_SIZE) AS PRODUCT_SIZE
+					 ]]>
+					 <choose>
+					 	<when test='mainYn.equals("Y")'>
+					 , ROW_NUMBER() OVER(ORDER BY MAX(A.GOODS_CNT) DESC) AS RN
+					 	</when>
+					 	<otherwise>
+					 , ROW_NUMBER() OVER(ORDER BY MAX(A.REVIEW_NO) DESC) AS RN
+					 	</otherwise>
+					 </choose>
+					 <![CDATA[
+				  FROM (
+						SELECT PR.REVIEW_NO
+							 , MAX(PR.PAYMENT_NO) AS PAYMENT_NO
+							 , MAX(PR.REVIEW_TYPE) AS REVIEW_TYPE
+							 , MAX(CC.CMN_NM ) AS REVIEW_TYPE_NM
+							 , MAX(PR.PRODUCT_NO) AS PRODUCT_NO
+							 , MAX(PR.USR_ID) AS USR_ID
+							 , CASE WHEN MAX(PR.REVIEW_TYPE) <> 'PR003' THEN MAX(CU.NAME)
+							 	WHEN MAX(PR.REVIEW_TYPE) = 'PR003' THEN SUBSTR(MAX(CU.NAME), 0, 1) || LPAD('*', LENGTH(MAX(CU.NAME)), '*')
+							 	END AS USR_NM
+							 , MAX(PR.TITLE) AS TITLE
+							 , MAX(PR.CONTENT) AS CONTENT
+							 , MAX(PR.SCOPE) AS SCOPE
+							 , COUNT(RS.REVIEW_NO) GOODS_CNT
+						  FROM PRODUCT_REVIEW PR
+						  	 , CMMN_USER CU
+						  	 , (
+						  	 	SELECT CC.CMN_CD
+						  	 		 , CC.CMN_NM
+						  	 	  FROM CMMN_CODE CC
+						  	 	 WHERE CC.DEL_YN = 'N'
+						  	 	   AND CC.CMN_TYPE = 'REVIEW_TYPE'
+						  	 	) CC
+						  	 , REVIEW_STATE RS
+						 WHERE PR.USR_ID  = CU.ID
+						   AND PR.REVIEW_TYPE = CC.CMN_CD
+						   AND PR.REVIEW_NO  = RS.REVIEW_NO(+)
+						   ]]>
+						   <if test="product_id != null">
+						   AND PR.PRODUCT_NO  IN (
+						   							SELECT PRODUCT_NO
+						   							  FROM PRODUCT_LIST PL
+						   							 WHERE 1=1
+						   							   AND PL.PRODUCT_ID = #{product_id}
+						   						 )
+						   </if>
+						   <if test="review_type != null">
+						   AND REVIEW_TYPE 	  = #{review_type}
+						   </if>
+						   <![CDATA[
+						 GROUP BY PR.REVIEW_NO
+						) A
+					  , (
 				 	 	SELECT FILE_ID
 				 	 		 , FILE_NM
 				 	 		 , FILE_REAL_NM
@@ -819,26 +880,19 @@
 				 	 	 WHERE CF.DEL_YN = 'N'
 				 	 	   AND CF.FILE_DIV = 'PRODUCT_REVIEW'
 				 	 	) CF
-				 	 , (
-				 	 	SELECT CC.CMN_CD 
-				 	 		 , CC.CMN_NM 
-				 	 	  FROM CMMN_CODE CC
-				 	 	 WHERE CC.DEL_YN	= 'N'
-				 	 	   AND CC.CMN_TYPE	= 'REVIEW_TYPE'
-				 	 	) CC
-				 WHERE PR.USR_ID  	  = CU.ID
-				   AND PR.REVIEW_NO   = CF.FILE_REF(+)
-				   AND PR.REVIEW_TYPE = CC.CMN_CD(+)
-				   AND PR.PRODUCT_NO  IN (
-				   							SELECT PRODUCT_NO
-				   							  FROM PRODUCT_LIST PL
-				   							 WHERE 1=1
-				   							   AND PL.PRODUCT_ID = #{product_id}
-				   						 )
-				   AND REVIEW_TYPE 	  = #{review_type}
-				 GROUP BY PR.REVIEW_NO
-		  		) A 
-		  WHERE A.RN BETWEEN #{start} AND #{end}
+				 	  , (
+				 	  	SELECT PRODUCT_NO
+				 	  		 , PRODUCT_ID
+				 	  		 , PRODUCT_SIZE
+				 	  	  FROM PRODUCT_LIST
+				 	  	 ) PL
+				  WHERE 1=1
+				    AND A.REVIEW_NO = CF.FILE_REF(+)
+				    AND A.PRODUCT_NO = PL.PRODUCT_NO
+				  GROUP BY A.REVIEW_NO
+				) A
+		 WHERE A.RN BETWEEN #{start} AND #{end}
+		 ]]>
 	</select>
 	
 	<!-- 상품 리뷰 조회(이미지 추가) 건수 조회 -->
@@ -846,10 +900,37 @@
 		<![CDATA[
 		SELECT COUNT(*)
 		  FROM (
-				SELECT REVIEW_NO
-				  FROM PRODUCT_REVIEW PR
-				 	 , CMMN_USER CU 
-				 	 , (
+				SELECT A.REVIEW_NO
+				  FROM (
+						SELECT PR.REVIEW_NO
+						  FROM PRODUCT_REVIEW PR
+						 	 , CMMN_USER CU 
+						 	 , (
+						 	 	SELECT CC.CMN_CD 
+						 	 		 , CC.CMN_NM 
+						 	 	  FROM CMMN_CODE CC
+						 	 	 WHERE CC.DEL_YN	= 'N'
+						 	 	   AND CC.CMN_TYPE	= 'REVIEW_TYPE'
+						 	 	) CC
+						 	 , REVIEW_STATE RS
+						 WHERE PR.USR_ID  	  = CU.ID
+						   AND PR.REVIEW_TYPE = CC.CMN_CD(+)
+						   AND PR.REVIEW_NO  = RS.REVIEW_NO(+)
+				]]>
+							<if test="product_id != null">
+						   AND PR.PRODUCT_NO  IN (
+						   							SELECT PRODUCT_NO
+						   							  FROM PRODUCT_LIST PL
+						   							 WHERE 1=1
+						   							   AND PL.PRODUCT_ID = #{product_id}
+						   						 )
+						   	</if>
+						   	<if test="review_type != null">
+						   AND REVIEW_TYPE 	  = #{review_type}
+						  	</if>
+						 GROUP BY PR.REVIEW_NO
+				  		) A 
+				  	  , (
 				 	 	SELECT FILE_ID
 				 	 		 , FILE_NM
 				 	 		 , FILE_REAL_NM
@@ -860,26 +941,10 @@
 				 	 	 WHERE CF.DEL_YN = 'N'
 				 	 	   AND CF.FILE_DIV = 'PRODUCT_REVIEW'
 				 	 	) CF
-				 	 , (
-				 	 	SELECT CC.CMN_CD 
-				 	 		 , CC.CMN_NM 
-				 	 	  FROM CMMN_CODE CC
-				 	 	 WHERE CC.DEL_YN	= 'N'
-				 	 	   AND CC.CMN_TYPE	= 'REVIEW_TYPE'
-				 	 	) CC
-				 WHERE PR.USR_ID  	  = CU.ID
-				   AND PR.REVIEW_NO   = CF.FILE_REF(+)
-				   AND PR.REVIEW_TYPE = CC.CMN_CD(+)
-				   AND PR.PRODUCT_NO  IN (
-				   							SELECT PRODUCT_NO
-				   							  FROM PRODUCT_LIST PL
-				   							 WHERE 1=1
-				   							   AND PL.PRODUCT_ID = #{product_id}
-				   						 )
-				   AND REVIEW_TYPE 	  = #{review_type}
-				 GROUP BY PR.REVIEW_NO
-		  		) A 
-		 ]]>
+				 WHERE 1=1
+				   AND A.REVIEW_NO = CF.FILE_REF(+)
+				 GROUP BY A.REVIEW_NO
+				 ) A
 	</select>
 	
 	<!-- 상품 장바구니 추가 -->
@@ -955,6 +1020,7 @@
 			 , A.PRODUCT_STOCK
 			 , A.STOCK_CHK
 			 , A.STOCK_CHK_NM
+			 , A.BASKET_CNT_CHK
 			 , PF.FILE_SRC || PF.FILE_REAL_NM AS IMG_SRC
 			 , CASE WHEN STOCK_CHK <> 0 THEN 1
 			 	ELSE 0 END AS CHK_YN
@@ -972,10 +1038,13 @@
 					 , PL.PRICE_DISCOUNT
 					 , NVL2(PL.PRICE_DISCOUNT, 'Y', 'N') AS DISCOUNT_YN
 					 , PL.PRODUCT_CNT AS PRODUCT_STOCK
-					 , CASE WHEN PL.PRODUCT_CNT < 1 OR DECODE(PM.DEL_YN, 'Y', PM.DEL_YN, PL.DEL_YN) = 'Y' THEN 0
+					 , CASE WHEN PL.PRODUCT_CNT < 1 OR DECODE(PM.DEL_YN, 'Y', PM.DEL_YN, PL.DEL_YN) = 'Y' OR PB.PRODUCT_CNT > PL.PRODUCT_CNT THEN 0
 					 		WHEN PL.PRODUCT_CNT < 5 AND PL.PRODUCT_CNT > 0 THEN 1
 					 		ELSE 2
 					 	  END AS STOCK_CHK
+					 , CASE WHEN PB.PRODUCT_CNT > PL.PRODUCT_CNT THEN 0
+					 		ELSE 1
+					 		END AS BASKET_CNT_CHK
 					 , CASE WHEN DECODE(PM.DEL_YN, 'Y', PM.DEL_YN, PL.DEL_YN) = 'Y' THEN '판매 중지'
 					 		WHEN PL.PRODUCT_CNT < 1 THEN '재고 없음'
 					 		WHEN PL.PRODUCT_CNT < 5 AND PL.PRODUCT_CNT > 0 THEN '재고 ' || PL.PRODUCT_CNT || '개 남음'
@@ -1024,6 +1093,16 @@
 		 START WITH UP_CD IS NULL
 	   CONNECT BY PRIOR TYPE_CD = UP_CD
 		 ORDER SIBLINGS BY SRT_ODR
+	]]>
+	</select>
+	
+	<!-- 상품 카테고리 값 조회(List) -->
+	<select id="selectProductTypeList" resultType="java.lang.String">
+	<![CDATA[
+		SELECT TYPE_CD
+		  FROM PRODUCT_TYPE
+		 WHERE DEL_YN = 'N'
+		   AND TYPE_CD IS NOT NULL
 	]]>
 	</select>
 	
@@ -1124,4 +1203,46 @@
 		   AND PRODUCT_NO = #{product_no}
 		]]>
 	</select>
+	
+	<!-- 상품 좋아요 체크 -->
+	<select id="selectReviewStateChk" parameterType="java.util.HashMap" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*) AS CNT
+		  FROM REVIEW_STATE
+		 WHERE 1=1
+		   AND USR_ID = #{id}
+		   AND REVIEW_NO = #{review_no}
+		]]>
+	</select>
+	
+	<insert id="insertReviewState" parameterType="java.util.HashMap">
+		<selectKey keyProperty="review_state_no" resultType="string" order="BEFORE">
+			SELECT FN_SEQ('RS') FROM DUAL
+		</selectKey>
+		<![CDATA[
+		INSERT INTO REVIEW_STATE
+					(
+					 REVIEW_STATE_NO
+				   , REVIEW_NO
+				   , USR_ID
+				   , SYS_ENR_ID
+				   , SYS_ENR_DTTM
+					)
+			VALUES (
+					 #{review_state_no}
+				   , #{review_no}
+				   , #{id}
+				   , #{id}
+				   , SYSDATE
+					)
+		]]>
+	</insert>
+	
+	<delete id="deleteReviewState" parameterType="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM REVIEW_STATE
+			  WHERE REVIEW_NO = #{review_no}
+			    AND USR_ID = #{id}
+		]]>
+	</delete>
 </mapper>

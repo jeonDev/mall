@@ -1,21 +1,35 @@
 package com.shop.mall.service;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFDrawing;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.tomcat.util.http.fileupload.FileItem;
+import org.apache.tomcat.util.http.fileupload.disk.DiskFileItem;
 import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import com.shop.mall.config.DuplicationException;
 import com.shop.mall.config.ErrorCode;
@@ -26,13 +40,13 @@ import com.shop.mall.util.StringUtil;
 import com.shop.mall.util.Utils;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	
 	@Autowired
 	private ProductDao dao;
 	
@@ -63,7 +77,7 @@ public class ProductService {
 			param.put("id", id);
 		}
 		
-		if(files.length > 5) {
+		if(files != null && files.length > 5) {
 			throw new IOException("파일은 5개 이상 등록할 수 없습니다.");
 		}
 		
@@ -101,7 +115,7 @@ public class ProductService {
 		// LIST 테이블 등록 성공
 		// FILE 등록
 		String listResult = (String) resultList.get("code");
-		if( "0000".equals(listResult) ) {
+		if(files != null && "0000".equals(listResult) ) {
 			HashMap<String, Object> fileParam = new HashMap<String, Object>();
 			String[] ext	= {"image/png", "image/jpg", "image/jpeg", "image/gif"};
 			String filePath = uploadPath + uploadFilePath;
@@ -258,31 +272,26 @@ public class ProductService {
 	public HashMap<String, Object> selectProductReviewList(int curPage, int pageUnit, int blockUnit, HashMap<String, Object> param){
 		HashMap<String, Object> result = new HashMap<String, Object>();
 		List<HashMap<String, Object>> reviewList = null;
-		String reviewType = (String) param.get("review_type");
 		
 		int count = 0;
 		
-		if("PR002".equals(reviewType)) {
-			count = dao.selectProductReviewImgListCount(param);
-		} else {
-			count = dao.selectProductReviewListCount(param);
-		}
+		count = dao.selectProductReviewImgListCount(param);
 		
 		Paging paging = new Paging(count, curPage, pageUnit, blockUnit);
 		
 		param.put("start", paging.getStart());
 		param.put("end"	 , paging.getEnd());
 		
-		if("PR002".equals(reviewType)) {
-			reviewList = dao.selectProductReviewImgList(param);
-		} else {
-			reviewList = dao.selectProductReviewList(param);
-		}
+		reviewList = dao.selectProductReviewImgList(param);
 		
 		result.put("reviewList", reviewList);
 		result.put("page", paging);
 		
-		result.put("reviewScope", this.selectProductReviewScope(param));	// 별점 조회
+		String mainYn = StringUtil.nullToBlank((String) param.get("mainYn"));
+		if(!"Y".equals(mainYn)) {
+			result.put("reviewScope", this.selectProductReviewScope(param));	// 별점 조회
+		}
+		
 		
 		return result;
 	}
@@ -352,7 +361,7 @@ public class ProductService {
 					}
 				}
 			} else {
-				logger.info("등록된 이미지가 없습니다.");
+				log.info("등록된 이미지가 없습니다.");
 			}
 		}
 		
@@ -384,6 +393,71 @@ public class ProductService {
 		return result;
 	}
 	
+	/*
+	 * 상품 좋아요
+	 * */
+	public HashMap<String, Object> productReviewInsert(HashMap<String, Object> param) {
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		CmmnUser user = util.tokenToUserInfo();
+		if(user != null) {
+			param.put("id", user.getId());
+		}
+		
+		// 좋아요 있는지 체크
+		int cnt = dao.selectReviewStateChk(param);
+		
+		if(cnt > 0) {
+			throw new DuplicationException("이미 좋아요 누른 리뷰입니다.", ErrorCode.INTER_SERVER_ERROR);
+		}
+		// 좋아요 입력
+		
+		this.insertReviewState(param);
+		result.put("message", "완료되었습니다.");
+		
+		return result;
+	}
+
+	/*
+	 * 상품 좋아요
+	 * */
+	public HashMap<String, Object> productReviewDelete(HashMap<String, Object> param) {
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		CmmnUser user = util.tokenToUserInfo();
+		if(user != null) {
+			param.put("id", user.getId());
+		}
+		
+		this.deleteReviewState(param);
+		result.put("message", "완료되었습니다.");
+		
+		return result;
+	}
+	
+	public HashMap<String, Object> selectReviewStateChk(HashMap<String, Object> param) {
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		CmmnUser user = util.tokenToUserInfo();
+		if(user != null) {
+			param.put("id", user.getId());
+		}
+		
+		int cnt = dao.selectReviewStateChk(param);
+		if(cnt > 0) {
+			result.put("code","0000");
+			result.put("message", "해당 리뷰에 좋아요를 취소하시겠습니까?");
+		} else {
+			result.put("code", "9999");
+			result.put("message", "해당 리뷰에 좋아요를 누르시겠습니까?");
+		}
+		return result;
+	}
+	
+	public int insertReviewState(HashMap<String, Object> param) {
+		return dao.insertReviewState(param);
+	}
+	
+	public int deleteReviewState(HashMap<String, Object> param) {
+		return dao.deleteReviewState(param);
+	}
 	/*
 	 * 사용자 상품 장바구니 추가
 	 * */
@@ -644,4 +718,123 @@ public class ProductService {
 		return dao.selectProductStock(param);
 	}
 	
+	/*
+	 * 상품 등록 (Excel)
+	 * */
+	@Transactional(rollbackFor = Exception.class)
+	public HashMap<String, Object> createProductExcel(MultipartFile file) throws ParseException, Exception{
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		
+		List<HashMap<String, Object>> dataList = new ArrayList<HashMap<String,Object>>();
+		
+		String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+		
+		if(!extension.equals("xlsx") && !extension.equals("xls")) {
+			throw new IOException("Excel 파일만 업로드 가능합니다.");
+		}
+		
+		Workbook workbook = null;
+		
+		if(extension.equals("xlsx")) {
+			workbook = new XSSFWorkbook(file.getInputStream());
+		} else if (extension.equals("xls")) {
+			workbook = new HSSFWorkbook(file.getInputStream());
+		}
+		
+		Sheet worksheet = workbook.getSheetAt(0);
+		HashMap<String, Object> data = new HashMap<String, Object>();
+		
+		List<String> productTypeList = this.selectProductTypeList();
+		
+		HashMap<String, Object> subParam = new HashMap<String, Object>();
+		subParam.put("cmn_type", "PRODUCT_STATE");
+		
+		List<HashMap<String, Object>> productStateCodeList = commonService.selectCmmnCodeList(subParam);
+		
+		for(int i = 1; i < worksheet.getPhysicalNumberOfRows(); i++) {
+			Row row = worksheet.getRow(i);
+			
+//			data.put("", row.getCell(0).getNumericCellValue()); // int
+//			data.put("", row.getCell(1).getStringCellValue()); // String
+			String productName 	= row.getCell(0).getStringCellValue();			// 상품명
+			int price 			= (int) row.getCell(1).getNumericCellValue();	// 가격
+			String productType 	= row.getCell(2).getStringCellValue();			// 상품구분
+			String productState = row.getCell(3).getStringCellValue();			// 상품상태
+			String productLists = row.getCell(4).getStringCellValue();			// 상품 사이즈
+			String productDetail = row.getCell(5).getStringCellValue();			// 상품 설명(HTML형식)
+
+			if("".equals(productType) || !productTypeList.contains(productType) ) {
+				throw new DuplicationException(i + "번째 상품 구분을 입력해주셔야 합니다.", ErrorCode.INTER_SERVER_ERROR);
+			}
+			
+			List<String> productStateList = new ArrayList<String>();
+			for(HashMap<String, Object> map : productStateCodeList) {
+				String cmnCd = (String) map.get("CMN_CD");
+				productStateList.add(cmnCd);
+			}
+
+			if("".equals(productState) || !productStateList.contains(productState) ) {
+				throw new DuplicationException(i + "번째 상품 상태를 입력해주셔야 합니다.", ErrorCode.INTER_SERVER_ERROR);
+			}
+			
+			List<String> productSize = new ArrayList<String>();
+			if("".equals(productLists)) {
+				throw new DuplicationException(i + "번째 상품 사이즈를 입력해주셔야 합니다.", ErrorCode.INTER_SERVER_ERROR);
+			} else {
+				for(String size : productLists.split(" ")) {
+					productSize.add(size);
+				}
+			}
+			
+			data.put("product_name", productName);		// 상품명
+			data.put("price", price);					// 가격
+			data.put("product_type", productType);		// 상품구분
+			data.put("product_state", productState);	// 상품상태
+			data.put("product_detail", productDetail);	// 상품명
+			data.put("product_size", productSize);		// 상품 사이즈
+			// images/common/default.jpg
+			String path = "classPath:static/images/common/default.jpg";
+			File imgFile = new File(path);
+			
+			MultipartFile f = this.convertFileToMultipartFile(imgFile);
+			data.put("files", f);
+			
+			dataList.add(data);
+		}
+		
+		for(HashMap<String, Object> param : dataList) {
+			MultipartFile[] files = (MultipartFile[]) param.get("files");
+			this.createProduct(param, files);
+		}
+		
+		result.put("message", "상품을 등록하였습니다.");
+		
+		return result;
+	}
+	
+	/*
+	 * 상품 카테고리 조회(List)
+	 * */
+	public List<String> selectProductTypeList() {
+		return dao.selectProductTypeList();
+	}
+	
+	private MultipartFile convertFileToMultipartFile(File file) throws IOException {
+		
+		DiskFileItem fileItem = new DiskFileItem("file", 
+				Files.probeContentType(file.toPath()), 
+				false, 
+				file.getName(), 
+				(int) file.length(), 
+				file.getParentFile());
+		try {
+			InputStream input = new FileInputStream(file);
+			OutputStream os = fileItem.getOutputStream();
+			IOUtils.copy(input, os);
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		
+		return new CommonsMultipartFile((org.apache.commons.fileupload.FileItem) fileItem);
+	}
 }

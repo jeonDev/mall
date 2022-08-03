@@ -2,8 +2,6 @@ package com.shop.mall.controller;
 
 import java.util.HashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,15 +10,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.shop.mall.service.BoardService;
 
-@RestController
-public class BoardController {
+import lombok.extern.slf4j.Slf4j;
 
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+@RestController
+@Slf4j
+public class BoardController {
 	
 	@Autowired
 	private BoardService service;

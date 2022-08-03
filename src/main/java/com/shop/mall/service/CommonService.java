@@ -3,14 +3,18 @@ package com.shop.mall.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,12 +26,12 @@ import com.shop.mall.util.StringUtil;
 import com.shop.mall.util.Utils;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CommonService {
-
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
 	private CommonDao dao;
@@ -200,4 +204,54 @@ public class CommonService {
 		return result;
 	}
 	
+	/*
+	 * Excel Download
+	 * */
+	public void excelDownload(HttpServletResponse response,
+			HashMap<String, Object> excelData) throws IOException{
+		
+		Workbook wb = new XSSFWorkbook();
+        Sheet sheet = wb.createSheet("첫번째 시트");
+        Row row = null;
+        Cell cell = null;
+        int rowNum = 0;
+        System.out.println("========================");
+        System.out.println(excelData);
+        System.out.println("========================");
+        List<String> headerData = (List<String>) excelData.get("header");
+
+        // Header
+        row = sheet.createRow(rowNum++);
+        int headerLine = 0;
+        for(String header : headerData) {
+        	cell = row.createCell(headerLine++);
+        	cell.setCellValue(header);
+        }
+
+        List<HashMap<String, Object>> bodyData = (List<HashMap<String, Object>>) excelData.get("body");
+        System.out.println(bodyData);
+        
+        // Body
+        for(HashMap<String, Object> bodyMap : bodyData) {
+        	row = sheet.createRow(rowNum++);
+        	
+        	int bodyLine = 0;
+        	for(Object key : bodyMap.keySet()){
+        		String body = StringUtil.nullToBlank(String.valueOf(bodyMap.get(key)));
+        		cell = row.createCell(bodyLine++);
+        		cell.setCellValue(body);
+        	}
+        }
+
+        String filename = StringUtil.nullToBlank((String) excelData.get("filename"));
+        
+        // 컨텐츠 타입과 파일명 지정
+        response.setContentType("ms-vnd/excel");
+//        response.setHeader("Content-Disposition", "attachment;filename=example.xls");
+        response.setHeader("Content-Disposition", "attachment;filename=" + (filename.equals("") ? "excel" : filename) + ".xlsx");
+
+        // Excel File Output
+        wb.write(response.getOutputStream());
+        wb.close();
+	}
 }

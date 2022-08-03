@@ -7,8 +7,6 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.shop.mall.service.PaymentService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
+@Slf4j
 public class PaymentController {
 
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	
 	@Autowired
 	private PaymentService service;
 	
@@ -48,7 +47,7 @@ public class PaymentController {
 	@PostMapping(value = "/user/payment")
 	public ResponseEntity<HashMap<String, Object>> productPayment(@RequestBody HashMap<String, Object> param) 
 			throws Exception {
-		logger.info("Controller ==> " + param);
+		log.info("Controller ==> " + param);
 		return new ResponseEntity<> (service.productPayment(param), 
 				HttpStatus.OK);
 	}
@@ -59,7 +58,7 @@ public class PaymentController {
 	@PostMapping(value = "/user/payment/callback")
 	public ResponseEntity<HashMap<String, Object>> productPaymentCallback(@RequestBody HashMap<String, Object> param) 
 			throws SQLIntegrityConstraintViolationException {
-		logger.info("Controller ==> " + param);
+		log.info("Controller ==> " + param);
 		return new ResponseEntity<> (service.productPaymentCallback(param), 
 				HttpStatus.OK);
 	}

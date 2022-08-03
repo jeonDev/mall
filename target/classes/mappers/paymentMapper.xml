@@ -323,6 +323,7 @@
 		 WHERE PM.PRODUCT_ID = PL.PRODUCT_ID 
 		   AND PL.PRODUCT_NO = A.PRODUCT_NO
 		   AND A.USR_ID 	 = CU.ID
+		 ORDER BY ORDER_DTTM DESC
 	</select>
 	
 	<!-- 구매내역 상태 history 조회 -->

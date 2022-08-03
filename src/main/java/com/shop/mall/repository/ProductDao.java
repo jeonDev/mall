@@ -45,4 +45,10 @@ public interface ProductDao {
 	public List<HashMap<String, Object>> selectProductSexStsCnt();		// 성별 상품 판매량
 	
 	public HashMap<String, Object> selectProductStock(HashMap<String, Object> param);	// 상품 재고 체크
+	
+	public int selectReviewStateChk(HashMap<String, Object> param); // 상품 좋아요 체크
+	public int insertReviewState(HashMap<String, Object> param);	// 상품 좋아요
+	public int deleteReviewState(HashMap<String, Object> param);	// 상품 좋아요
+	
+	public List<String> selectProductTypeList();	// 상품 카테고리 조회(List)
 }

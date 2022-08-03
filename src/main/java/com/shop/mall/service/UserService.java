@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -26,11 +25,12 @@ import com.shop.mall.repository.UserDao;
 import com.shop.mall.util.StringUtil;
 import com.shop.mall.util.Utils;
 
-import jdk.internal.org.jline.utils.Log;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class UserService{
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -175,7 +175,7 @@ public class UserService{
 						.body(result);
 			} else {
 				
-				Log.info("Unauthorized!! (Not Refresh Token)");
+				log.info("Unauthorized!! (Not Refresh Token)");
 				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요한 기능입니다.");
 				return ResponseEntity.ok()
 						.body(result);

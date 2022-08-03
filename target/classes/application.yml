@@ -13,8 +13,10 @@ logging:
 # Oracle MyBatis
 spring:
   datasource:
-    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-    url: jdbc:log4jdbc:oracle:thin:@localhost:1521/xe
+  #net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    driver-class-name: oracle.jdbc.driver.OracleDriver
+    #log4jdbc
+    url: jdbc:oracle:thin:@localhost:1521/xe
     username: shop
     password: shop7
     

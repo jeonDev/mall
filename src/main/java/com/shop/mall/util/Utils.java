@@ -2,12 +2,9 @@ package com.shop.mall.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
@@ -21,8 +18,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,13 +25,12 @@ import com.shop.mall.config.security.JwtTokenProvider;
 import com.shop.mall.model.CmmnUser;
 
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Component
+@Slf4j
 public class Utils {
-	
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private final JwtTokenProvider jwtTokenProvider;
 	
@@ -116,7 +110,7 @@ public class Utils {
 	
 	public JSONObject jsonToStrList(HashMap<String, Object> listStr) {
 		
-		logger.info("jsonToStrList");
+		log.info("jsonToStrList");
 		JSONObject jsonObj = new JSONObject(listStr); 
 		/*JSONParser jsonParser = new JSONParser();
 		JSONArray jsonObj = new JSONArray();
@@ -127,7 +121,7 @@ public class Utils {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}*/
-		logger.info("" + jsonObj);
+		log.info("" + jsonObj);
 		return jsonObj;
 	}
 	
@@ -140,7 +134,7 @@ public class Utils {
 	 * */
 	public int excelDownload(HttpServletResponse response,
 			HashMap<String, Object> excel) throws IOException{
-		logger.info("" + excel);
+		log.info("" + excel);
 		
 		Workbook wb = new XSSFWorkbook();
 		Sheet sheet = wb.createSheet("첫번째 시트");
@@ -157,7 +151,7 @@ public class Utils {
 		while( headerObj.hasNext() ) {
 			String c = headerObj.next();
 			
-			logger.info("Excel Header(" + cellNum + ") : " + c);
+			log.info("Excel Header(" + cellNum + ") : " + c);
 			cell = row.createCell(cellNum++);
 			cell.setCellValue(c);
 		}

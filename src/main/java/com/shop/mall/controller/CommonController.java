@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,17 +14,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.shop.mall.service.CommonService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
+@Slf4j
 public class CommonController {
-	
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	
+		
 	@Autowired
 	private CommonService service;
 	
@@ -62,7 +62,7 @@ public class CommonController {
 	@GetMapping(value="/cert/check")
 	public ResponseEntity<HashMap<String, Object>> certNumCheck(@RequestParam HashMap<String, Object> param) 
 			throws Exception{
-		logger.info("" + param);
+		log.info("" + param);
 		return new ResponseEntity<> (service.certNumCheck(param),
 				HttpStatus.OK);
 	}
@@ -80,4 +80,14 @@ public class CommonController {
 				HttpStatus.OK);
 	}
 	
+	/*
+	 * Excel Download
+	 * Parameter : HashMap<String, Object> -> header(String, String) / body(String, Object) / filename(엑셀파일명)
+	 * return	 : [File] excel File
+	 * */
+	@PostMapping(value="/excel/download")
+	public void excelDownload(HttpServletResponse response
+			, @RequestBody HashMap<String, Object> excelData) throws IOException{
+		service.excelDownload(response, excelData);
+	}
 }
